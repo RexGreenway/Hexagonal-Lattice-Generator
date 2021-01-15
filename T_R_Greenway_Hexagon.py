@@ -1,15 +1,22 @@
 import networkx as nx
 import cv2 as cv
 import numpy as np
+from math import sin, cos, pi, sqrt, ceil
 
-centre = [(1.000, 0.000), (0.500, -0.866), (-0.500, -0.866), (-1.000, 0.000), (-0.500, 0.866), (0.500, 0.866)]
-chg_vec_se = (1.500, -0.866)
-chg_vec_sw = (-1.500, -0.866)
-chg_vec_nw = (-1.500, 0.866)
-chg_vec_n = (0.000, 1.732)
-chg_vec_ne = (1.500, 0.866)
-chg_vec_s = (0.000, -1.732)
-
+### HEX GEN ###
+sideLength = float("%.3f" % float(input("Please input desired side legnth: ")))
+halfHexHeight = float("%.3f" % sqrt(sideLength**2 - (sideLength/2)**2))
+print(halfHexHeight)
+#Centre
+centre = [(sideLength, 0), (sideLength/2, halfHexHeight), (- sideLength/2, halfHexHeight), (- sideLength, 0), (- sideLength/2, - halfHexHeight), (sideLength/2, - halfHexHeight)]
+#Vectors
+sideLengthPlus = sideLength + (sideLength/2)
+chg_vec_se = (sideLengthPlus, - halfHexHeight)
+chg_vec_sw = (- sideLengthPlus, - halfHexHeight)
+chg_vec_nw = (- sideLengthPlus, halfHexHeight)
+chg_vec_n = (0.000, 2*halfHexHeight)
+chg_vec_ne = (sideLengthPlus, halfHexHeight)
+chg_vec_s = (0.000, - 2*halfHexHeight)
 
 def change_vector(a, b):
     hex_pos = []
@@ -30,8 +37,7 @@ def dict_search(search, dictionary):
 
 def create_lattice():
     # Establish constants
-    print("Enter Number of Layers: ")
-    m = int(input())
+    m = int(input("Enter Number of Layers: "))
 
     hex_num = int(1 + 6 * ((m * (m - 1)) / 2))
     layer_list = list(range(m))
@@ -121,8 +127,11 @@ def draw_lattice():
     W = 1050
     size = W, W, 3
     image = np.ones(size)  # creates white canvas
-
+    
+    ## CREATE LATTICE
     graph = create_lattice()  # first generate graph of the lattice
+
+    ## DRAW LATTICE
     for edge in graph[1].edges:  # draw edges
         start_pos = graph[0][edge[0]]
         start_pos_big = tuple([int(x * 20 + W/2) for x in start_pos])  # adapt position coords for pixel display
