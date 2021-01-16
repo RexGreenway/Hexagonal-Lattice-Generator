@@ -3,8 +3,6 @@ import cv2 as cv
 import numpy as np
 from math import sin, cos, pi, sqrt, ceil
 
-# this is a test
-
 ### HEX GEN ###
 sideLength = float("%.3f" % float(input("Please input desired side legnth: ")))
 halfHexHeight = float("%.3f" % sqrt(sideLength**2 - (sideLength/2)**2))
