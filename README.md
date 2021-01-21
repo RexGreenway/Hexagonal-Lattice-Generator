@@ -14,9 +14,10 @@ Features so far:
 - Methods to generate and draw lattices for squares and hexagons.
 
 To be completed:
+- PRIORITY: switch working methods to use polar coordinates instead.
 - Structure to build and work with non-regular polygons.
 - Introduce factory to dynamically cast correct object instance when called.
-- Re-work graph generation process to remove unoptimised creationo and deletion of nodes and edges.
+- Re-work graph generation process to remove unoptimised creation and deletion of nodes and edges.
 - Add additional useful methods to relevant classes. 
 - Add thourough documentation to all classes.
 
