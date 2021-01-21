@@ -347,9 +347,3 @@ class Octagon(RegularPolygon):
         IMPLEMENT DOCUMENTATION
         """
         super().__init__(7, edgeLength, rotation)
-
-
-
-test = Hexagon(1)
-testLat = test.generate_lattice(10)
-test.draw_shape(testLat)
