@@ -3,11 +3,11 @@ By Rex Greenway
 
 This small project uses python libraries networkx, numpy, and OpenCV to generate and draw lattices layer by layer, working out from the centre.
 
-V1) 2 simple and unoptimised files producing specific lattices. 
+# V1) 2 simple and unoptimised files producing specific lattices. 
 - Hexagon - Generates lattice of hexagons with desired edge length and number of layers input by the user.
 - Parrallogram - Generates lattice of paralleograms, with changable internal angle, to fit within a given circle.
 
-V2) (In progress..) Designed as a class based extention to the NetworkX library to work with, view, and manipulate polygons.
+# V2) (In progress..) Designed as a class based extention to the NetworkX library to work with, view, and manipulate polygons.
 Features so far:
 - Basic class structure for Regular Polygons.
 - Methods to generate and draw Regular Polygons.
