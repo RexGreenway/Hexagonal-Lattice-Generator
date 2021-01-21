@@ -2,7 +2,7 @@ import networkx as nx
 import abc
 import cv2 as cv
 import numpy as np
-from math import sin, cos, radians, sqrt
+from math import sin, cos, radians, sqrt, pi
 
 from LatticeGen_Funcs import my_filled_circle, my_line, change_vector, dict_search
 
@@ -90,7 +90,7 @@ class RegularPolygon(Polygon):
         super().__init__()
         self.sides = sides
         self.edgeLength = edgeLength
-        self.rotation = radians(rotation)
+        self.rotation = rotation
 
         # Error handling if a certain rules not met.
         if self.sides < 3:
@@ -101,8 +101,8 @@ class RegularPolygon(Polygon):
             raise ValueError("Argument 'rotation' = {self.rotation}. Shape rotations should be within range (-360, 360).".format(self=self))
         
         self.intAngle = round(((self.sides - 2)*180)/self.sides, 3)
-        self.theta = radians(180 - self.intAngle)
-        self.radius = round((self.edgeLength/2)/sin(self.theta/2 ), 3)
+        self.theta = 180 - self.intAngle
+        self.radius = round((self.edgeLength)/(2*sin(radians(self.theta/2))), 3)
         self.generate_shape()
 
         self.can_lattice = self.get_lattice_state()
@@ -114,8 +114,8 @@ class RegularPolygon(Polygon):
         """
         pos = []
         for i in range(self.sides):
-            x = self.radius*cos(i*self.theta + self.rotation)
-            y = self.radius*sin(i*self.theta + self.rotation)
+            x = self.radius*cos(radians(i*self.theta + self.rotation))
+            y = self.radius*sin(radians(i*self.theta + self.rotation))
             coord = [round(x, 3), round(y, 3)]
             pos.append(coord)
             self.add_node(i, pos = tuple(pos[i]))
@@ -200,6 +200,20 @@ class Triangle(RegularPolygon):
         IMPLEMENT DOCUMENTATION
         """
         super().__init__(3, edgeLength, rotation)
+    
+    def _get_shape_num(self, layers):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        return int(3*((layers*(layers - 1)/2))+1)
+    
+    def _generate_change_vectors(self):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        change_vectors = {}
+
+        return change_vectors
 
 class Square(RegularPolygon):
     """
@@ -240,7 +254,7 @@ class Square(RegularPolygon):
             centre.append(node[1]["pos"])
         layer_list = list(range(layers))
         even_numbers = list(range(0, (layers*2), 2))
-        self.vector = (2*round(self.radius*cos(self.rotation), 3), 2*round(self.radius*sin(self.rotation), 3))
+        self.vector = (2*round(self.radius*cos(radians(self.rotation)), 3), 2*round(self.radius*sin(radians(self.rotation)), 3))
         position = []
         for layer in layer_list:
             if layer == 0:
@@ -289,15 +303,16 @@ class Hexagon(RegularPolygon):
         IMPLEMENT DOCUMENTATION
         """
         edgeLengthPlus = 1.5*self.edgeLength
-        halfHexHeight = sqrt(self.edgeLength**2 - (self.edgeLength/2)**2)
-        change_vectors = {
-            0: (- edgeLengthPlus, halfHexHeight),
-            1: (- edgeLengthPlus, - halfHexHeight),
-            2: (0, - 2*halfHexHeight),
-            3: (edgeLengthPlus, - halfHexHeight),
-            4: (edgeLengthPlus, halfHexHeight),
-            5: (0, 2*halfHexHeight),
-        }
+        halfHexHeight = sqrt(0.75*((self.edgeLength)**2))
+        vector_length = sqrt(edgeLengthPlus**2 + halfHexHeight**2)
+        base_vector = {}
+        for i in range(self.sides):
+            base_vector[i] = (vector_length, i*(self.theta) + self.theta/2 + self.rotation)
+        change_vectors = {}
+        for i in base_vector:
+            x = vector_length*cos(radians(base_vector[i][1]))
+            y = vector_length*sin(radians(base_vector[i][1]))
+            change_vectors[i] = (round(x, 3), round(y, 3))
         return change_vectors
     
     def _generate_lattice_positions(self, layers, chg_vectors):
