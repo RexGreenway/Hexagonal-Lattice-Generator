@@ -18,6 +18,7 @@ To be completed:
 - Introduce factory to dynamically cast correct object instance when called.
 - Re-work graph generation process to remove unoptimised creationo and deletion of nodes and edges.
 - Add additional useful methods to relevant classes. 
+- Add thourough documentation to all classes.
 
 Possibilty:
 - Functionality to dynamically detect whether or not a user built shape is able to be tessalated?  
