@@ -13,13 +13,16 @@ Features so far:
 - Methods to generate and draw Regular Polygons.
 - Methods to generate and draw lattices for squares and hexagons.
 
+Completed:
+- - Re-work graph generation process to remove unoptimised creation and deletion of nodes and edges.
+
 To be completed:
-- PRIORITY: switch working methods to use polar coordinates instead.
+- Triangle Lattice Generation
+- Move all libraries (except networkx) to supplimentry file.
+- Add thourough documentation to all classes.
+- Add additional useful methods to relevant classes. 
 - Structure to build and work with non-regular polygons.
 - Introduce factory to dynamically cast correct object instance when called.
-- Re-work graph generation process to remove unoptimised creation and deletion of nodes and edges.
-- Add additional useful methods to relevant classes. 
-- Add thourough documentation to all classes.
 
 Possibilty:
 - Functionality to dynamically detect whether or not a user built shape is able to be tessalated?  
