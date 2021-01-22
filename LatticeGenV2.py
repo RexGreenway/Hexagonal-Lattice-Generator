@@ -4,7 +4,7 @@ import cv2 as cv
 import numpy as np
 from math import sin, cos, radians, sqrt, pi
 
-from LatticeGen_Funcs import my_filled_circle, my_line, change_vector, dict_search
+from LatticeGen_Funcs import my_filled_circle, my_line, add_vectors, draw_graph
 
 ### CHILD CLASS of NetworkX GRAPH Class, to handle and manipulate polygons ###
 class Polygon(nx.Graph):
@@ -24,7 +24,7 @@ class Polygon(nx.Graph):
         print("Nodes: ", self.nodes.data())
         print("Edges: ", self.edges.data())
 
-    # TEMP - need to clean up open cv file stuff and re-work postion finding.
+    # TEMP - need to clean up open cv file stuff and re-work postion finding (move open cv stuff to seperate file, like the draw_shape function).
     def draw_shape(self, diagram):
         """
         IMPLEMENT DOCUMENTATION
@@ -90,7 +90,7 @@ class RegularPolygon(Polygon):
         super().__init__()
         self.sides = sides
         self.edgeLength = edgeLength
-        self.rotation = rotation
+        self.rotation = - rotation  # Negative to rotate shapes anti-clockwise (like polar coordinates.)
 
         # Error handling if a certain rules not met.
         if self.sides < 3:
@@ -107,7 +107,7 @@ class RegularPolygon(Polygon):
 
         self.can_lattice = self.get_lattice_state()
 
-    # Generate shape for Regular Polygons
+    # Generate single shape for Regular Polygons
     def generate_shape(self):
         """
         IMPLEMENT DOCUMENTATION
@@ -130,38 +130,6 @@ class RegularPolygon(Polygon):
         """
         lattice_test = 360/self.intAngle
         return lattice_test.is_integer()
-    
-    def _generate_lattice_graph(self, posList, shapeNum):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        position = posList
-        shape_num = shapeNum
-        lattice = nx.Graph()
-        for shape in range(shape_num):
-            H = nx.Graph()
-            for i in range(self.sides):
-                H.add_node(shape + i / 10, pos = position[shape][i])  # add nodes to H
-            node_list = list(H.nodes)
-            for j in range(self.sides - 1):
-                H.add_edge(node_list[j], node_list[j + 1])  # add edges to H
-            H.add_edge(node_list[0], node_list[self.sides - 1])
-            lattice_shape_dict = nx.get_node_attributes(lattice, "pos")
-            H_shape_dict = nx.get_node_attributes(H, "pos")
-            for v in H_shape_dict:
-                v_neighbors = list(H.adj[v])
-                search_pos = H_shape_dict.get(v)
-                if search_pos in lattice_shape_dict.values():
-                    replacement = dict_search(search_pos, lattice_shape_dict)  # finds the preexisting node with same position
-                    H.remove_node(v)  # removes dupe node and all adjacent edges
-                    H.add_node(replacement, pos = search_pos)  # adds replacement with same position
-                    for e in v_neighbors:
-                        H.add_edge(replacement, e)  # re establishes edges with v's original neighbors
-            lattice = nx.compose(lattice, H)
-            lattice_shape_dict = nx.get_node_attributes(lattice, "pos")
-
-        return lattice
-
 
     def generate_lattice(self, layers):
         """
@@ -169,23 +137,23 @@ class RegularPolygon(Polygon):
         """
         if self.can_lattice:
             chg_vectors = self._generate_change_vectors()
-            position = self._generate_lattice_positions(layers, chg_vectors)
-            shape_num = self._get_shape_num(layers)
-            self.lattice = self._generate_lattice_graph(position, shape_num)
+            self.lattice = self._generate_lattice_graph(layers, chg_vectors)
             return self.lattice
         else:
             print("LATTICE NOT POSSIBLE WITH THIS SHAPE")
     
     @abc.abstractmethod
-    def _generate_lattice_positions(self, layers, chg_vectors):
+    def _generate_change_vectors(self):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
         pass
 
     @abc.abstractmethod
-    def _get_shape_num(self, layers):
-        pass
-    
-    @abc.abstractmethod
-    def _generate_change_vectors(self):
+    def _generate_lattice_graph(self, layers, chg_vectors):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
         pass
 
 
@@ -224,53 +192,52 @@ class Square(RegularPolygon):
         IMPLEMENT DOCUMENTATION
         """
         super().__init__(4, edgeLength, rotation)
-    
-    def _get_shape_num(self, layers):
+
+    def _generate_change_vectors(self): 
         """
         IMPLEMENT DOCUMENTATION
         """
-        return (1 + (layers - 1)*2)**2
-    
-    def _generate_change_vectors(self):
+        polar_vectors = {}
+        for i in range(self.sides):
+            polar_vectors[i] = (self.edgeLength, i*self.theta + (180 - (self.intAngle/2)) + self.rotation)
+        edge_vectors = {}
+        for j in range(self.sides):
+            x = self.edgeLength*cos(radians(polar_vectors[j][1]))
+            y = self.edgeLength*sin(radians(polar_vectors[j][1]))
+            edge_vectors[j] = (round(x, 3), round(y, 3))
+        return edge_vectors
+
+    def _generate_lattice_graph(self, layers, chg_vectors):
         """
-        IMPLEMENT DOCUMENTATION
+        IMPLEMENT 
         """
-        change_vectors = {}
-        for side in range(self.sides - 1):
-            x_vec = self.nodes.data()[side + 1]["pos"][0] - self.nodes.data()[side]["pos"][0]
-            y_vec = self.nodes.data()[side + 1]["pos"][1] - self.nodes.data()[side]["pos"][1]
-            change_vectors[side] = (x_vec, y_vec)
-        x_vec = self.nodes.data()[0]["pos"][0] - self.nodes.data()[self.sides - 1]["pos"][0]
-        y_vec = self.nodes.data()[0]["pos"][1] - self.nodes.data()[self.sides - 1]["pos"][1]
-        change_vectors[self.sides - 1] = (x_vec, y_vec)
-        return change_vectors
-    
-    def _generate_lattice_positions(self, layers, chg_vectors):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        centre = []
-        for node in self.nodes.data():
-            centre.append(node[1]["pos"])
+        lattice = nx.Graph()
+        
+        rad_x = round(self.radius*cos(radians(self.rotation)), 3)
+        rad_y = round(self.radius*sin(radians(self.rotation)), 3)
+
         layer_list = list(range(layers))
-        even_numbers = list(range(0, (layers*2), 2))
-        self.vector = (2*round(self.radius*cos(radians(self.rotation)), 3), 2*round(self.radius*sin(radians(self.rotation)), 3))
-        position = []
+        even_numbers = list(range(0, 2*layers, 2))
+        shape = 1
         for layer in layer_list:
+            radius_vec = (round((layer*2*rad_x) + rad_x, 3), round((layer*2*rad_y) + rad_y, 3))
             if layer == 0:
-                position.append(centre)
+                node_pos = add_vectors((0, 0), radius_vec)
+                draw_graph(node_pos, lattice, 0, self.sides, chg_vectors)
             else:
-                layer_chg_vec = tuple([layer * x for x in self.vector])
-                shape_pos = change_vector(centre, layer_chg_vec, self.sides)
-                position.append(shape_pos)
+                start_node_pos = add_vectors((0, 0), radius_vec)
+                draw_graph(start_node_pos, lattice, shape, self.sides, chg_vectors)
                 for i in range(self.sides - 1):
                     for _ in range(even_numbers[layer]):
-                        shape_pos = change_vector(shape_pos, chg_vectors[i], self.sides)
-                        position.append(shape_pos)
+                        shape += 1
+                        start_node_pos = add_vectors(start_node_pos, chg_vectors[i])
+                        draw_graph(start_node_pos, lattice, shape, self.sides, chg_vectors)
                 for _ in range(even_numbers[layer] - 1):
-                    shape_pos = change_vector(shape_pos, chg_vectors[self.sides - 1], self.sides)
-                    position.append(shape_pos)
-        return position
+                    shape += 1
+                    start_node_pos = add_vectors(start_node_pos, chg_vectors[self.sides - 1])
+                    draw_graph(start_node_pos, lattice, shape, self.sides, chg_vectors)
+        return lattice
+    
 
 class Pentagon(RegularPolygon):
     """
@@ -292,12 +259,6 @@ class Hexagon(RegularPolygon):
         """
         super().__init__(6, edgeLength, rotation)
     
-    def _get_shape_num(self, layers):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        return int(1 + 6 * ((layers * (layers - 1)) / 2))
-    
     def _generate_change_vectors(self):
         """
         IMPLEMENT DOCUMENTATION
@@ -315,32 +276,38 @@ class Hexagon(RegularPolygon):
             change_vectors[i] = (round(x, 3), round(y, 3))
         return change_vectors
     
-    def _generate_lattice_positions(self, layers, chg_vectors):
+    def _generate_lattice_graph(self, layers, chg_vectors):
         """
-        IMPLEMENT DOCUMENTATION
+        IMPLEMENT 
         """
-        centre = []
-        for node in self.nodes.data():
-            centre.append(node[1]["pos"])
+        lattice = nx.Graph()
+        
+        rad_x = round(self.radius*cos(radians(self.rotation)), 3)
+        rad_y = round(self.radius*sin(radians(self.rotation)), 3)
+        radius_vec = (rad_x, rad_y)
 
-        layer_list = list(range(layers))
-        position = []
-        for layer in layer_list:
+        vectors = {}
+        for i in range(6):
+            x = self.radius*cos(radians(i*self.theta + (180 - (self.intAngle/2)) + self.rotation))
+            y = self.radius*sin(radians(i*self.theta + (180 - (self.intAngle/2)) + self.rotation))
+            vectors[i] = (round(x, 3), round(y, 3))
+        
+        shape = 1
+        for layer in range(layers):
             if layer == 0:
-                position.append(centre)
+                start_node_pos = add_vectors((0, 0), radius_vec)
+                draw_graph(start_node_pos, lattice, 0, self.sides, vectors)
             else:
-                layer_chg_vec = tuple([layer * x for x in chg_vectors[4]])
-                shape_pos = change_vector(centre, layer_chg_vec, self.sides)
-                position.append(shape_pos)
-                for i in range(self.sides - 1):
+                start_node_pos = add_vectors(start_node_pos, chg_vectors[4])
+                draw_graph(start_node_pos, lattice, shape, self.sides, vectors)
+                for i in range(self.sides):
                     for _ in range(layer):
-                        shape_pos = change_vector(shape_pos, chg_vectors[i], self.sides)
-                        position.append(shape_pos)
-                for _ in range(layer - 1):
-                    shape_pos = change_vector(shape_pos, chg_vectors[self.sides - 1], self.sides)
-                    position.append(shape_pos)
-        return position
-    
+                        shape += 1
+                        start_node_pos = add_vectors(start_node_pos, chg_vectors[i])
+                        draw_graph(start_node_pos, lattice, shape, self.sides, vectors)
+        
+        return lattice
+
 
 
 class Septagon(RegularPolygon):
@@ -361,4 +328,4 @@ class Octagon(RegularPolygon):
         """
         IMPLEMENT DOCUMENTATION
         """
-        super().__init__(7, edgeLength, rotation)
+        super().__init__(8, edgeLength, rotation)
