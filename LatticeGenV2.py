@@ -231,7 +231,6 @@ class Square(RegularPolygon):
                     for _ in range(even_numbers[layer]):
                         draw_graph(start_node_pos, lattice, shape, self.sides, chg_vectors, self.edgeLength)
                         start_node_pos = add_vectors(start_node_pos, chg_vectors[i])
-                        
                         shape += 1
         return lattice
     
