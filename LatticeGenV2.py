@@ -3,6 +3,7 @@ import abc
 import cv2 as cv
 import numpy as np
 from math import sin, cos, radians, sqrt, pi
+import matplotlib.pyplot as plt
 
 from LatticeGen_Funcs import my_filled_circle, my_line, add_vectors, draw_graph
 
@@ -90,7 +91,7 @@ class RegularPolygon(Polygon):
         super().__init__()
         self.sides = sides
         self.edgeLength = edgeLength
-        self.rotation = - rotation  # Negative to rotate shapes anti-clockwise (like polar coordinates.)
+        self.rotation = rotation  # OPEN CV is rotating this in the wrong direction!!!!!!!
 
         # Error handling if a certain rules not met.
         if self.sides < 3:
@@ -100,9 +101,9 @@ class RegularPolygon(Polygon):
         elif self.rotation < - 360 and self.rotation > 360:
             raise ValueError("Argument 'rotation' = {self.rotation}. Shape rotations should be within range (-360, 360).".format(self=self))
         
-        self.intAngle = round(((self.sides - 2)*180)/self.sides, 3)
+        self.intAngle = round(((self.sides - 2)*180)/self.sides, 2)
         self.theta = 180 - self.intAngle
-        self.radius = round((self.edgeLength)/(2*sin(radians(self.theta/2))), 3)
+        self.radius = round((self.edgeLength)/(2*sin(radians(self.theta/2))), 2)
         self.generate_shape()
 
         self.can_lattice = self.get_lattice_state()
@@ -116,7 +117,7 @@ class RegularPolygon(Polygon):
         for i in range(self.sides):
             x = self.radius*cos(radians(i*self.theta + self.rotation))
             y = self.radius*sin(radians(i*self.theta + self.rotation))
-            coord = [round(x, 3), round(y, 3)]
+            coord = [round(x, 2), round(y, 2)]
             pos.append(coord)
             self.add_node(i, pos = tuple(pos[i]))
         for i in range(self.sides - 1):
@@ -204,7 +205,7 @@ class Square(RegularPolygon):
         for j in range(self.sides):
             x = self.edgeLength*cos(radians(polar_vectors[j][1]))
             y = self.edgeLength*sin(radians(polar_vectors[j][1]))
-            edge_vectors[j] = (round(x, 3), round(y, 3))
+            edge_vectors[j] = (round(x, 2), round(y, 2))
         return edge_vectors
 
     def _generate_lattice_graph(self, layers, chg_vectors):
@@ -213,29 +214,25 @@ class Square(RegularPolygon):
         """
         lattice = nx.Graph()
         
-        rad_x = round(self.radius*cos(radians(self.rotation)), 3)
-        rad_y = round(self.radius*sin(radians(self.rotation)), 3)
+        rad_x = round(self.radius*cos(radians(self.rotation)), 2)
+        rad_y = round(self.radius*sin(radians(self.rotation)), 2)
 
         layer_list = list(range(layers))
         even_numbers = list(range(0, 2*layers, 2))
-        shape = 1
+        shape = 0
         for layer in layer_list:
-            radius_vec = (round((layer*2*rad_x) + rad_x, 3), round((layer*2*rad_y) + rad_y, 3))
+            radius_vec = (round((layer*2*rad_x) + rad_x, 2), round((layer*2*rad_y) + rad_y, 2))
+            start_node_pos = add_vectors((0, 0), radius_vec)
             if layer == 0:
-                node_pos = add_vectors((0, 0), radius_vec)
-                draw_graph(node_pos, lattice, 0, self.sides, chg_vectors)
+                draw_graph(start_node_pos, lattice, shape, self.sides, chg_vectors, self.edgeLength)
+                shape += 1
             else:
-                start_node_pos = add_vectors((0, 0), radius_vec)
-                draw_graph(start_node_pos, lattice, shape, self.sides, chg_vectors)
-                for i in range(self.sides - 1):
+                for i in range(self.sides):
                     for _ in range(even_numbers[layer]):
-                        shape += 1
+                        draw_graph(start_node_pos, lattice, shape, self.sides, chg_vectors, self.edgeLength)
                         start_node_pos = add_vectors(start_node_pos, chg_vectors[i])
-                        draw_graph(start_node_pos, lattice, shape, self.sides, chg_vectors)
-                for _ in range(even_numbers[layer] - 1):
-                    shape += 1
-                    start_node_pos = add_vectors(start_node_pos, chg_vectors[self.sides - 1])
-                    draw_graph(start_node_pos, lattice, shape, self.sides, chg_vectors)
+                        
+                        shape += 1
         return lattice
     
 
@@ -264,8 +261,8 @@ class Hexagon(RegularPolygon):
         IMPLEMENT DOCUMENTATION
         """
         edgeLengthPlus = 1.5*self.edgeLength
-        halfHexHeight = sqrt(0.75*((self.edgeLength)**2))
-        vector_length = sqrt(edgeLengthPlus**2 + halfHexHeight**2)
+        halfHexHeight = round(sqrt(0.75*((self.edgeLength)**2)), 2)
+        vector_length = round(sqrt(edgeLengthPlus**2 + halfHexHeight**2), 2)
         base_vector = {}
         for i in range(self.sides):
             base_vector[i] = (vector_length, i*(self.theta) + self.theta/2 + self.rotation)
@@ -273,7 +270,7 @@ class Hexagon(RegularPolygon):
         for i in base_vector:
             x = vector_length*cos(radians(base_vector[i][1]))
             y = vector_length*sin(radians(base_vector[i][1]))
-            change_vectors[i] = (round(x, 3), round(y, 3))
+            change_vectors[i] = (round(x, 2), round(y, 2))
         return change_vectors
     
     def _generate_lattice_graph(self, layers, chg_vectors):
@@ -282,29 +279,29 @@ class Hexagon(RegularPolygon):
         """
         lattice = nx.Graph()
         
-        rad_x = round(self.radius*cos(radians(self.rotation)), 3)
-        rad_y = round(self.radius*sin(radians(self.rotation)), 3)
+        rad_x = round(self.radius*cos(radians(self.rotation)), 2)
+        rad_y = round(self.radius*sin(radians(self.rotation)), 2)
         radius_vec = (rad_x, rad_y)
 
         vectors = {}
         for i in range(6):
             x = self.radius*cos(radians(i*self.theta + (180 - (self.intAngle/2)) + self.rotation))
             y = self.radius*sin(radians(i*self.theta + (180 - (self.intAngle/2)) + self.rotation))
-            vectors[i] = (round(x, 3), round(y, 3))
+            vectors[i] = (round(x, 2), round(y, 2))
         
         shape = 1
         for layer in range(layers):
             if layer == 0:
                 start_node_pos = add_vectors((0, 0), radius_vec)
-                draw_graph(start_node_pos, lattice, 0, self.sides, vectors)
+                draw_graph(start_node_pos, lattice, 0, self.sides, vectors, self.edgeLength)
             else:
                 start_node_pos = add_vectors(start_node_pos, chg_vectors[4])
-                draw_graph(start_node_pos, lattice, shape, self.sides, vectors)
+                draw_graph(start_node_pos, lattice, shape, self.sides, vectors, self.edgeLength)
                 for i in range(self.sides):
                     for _ in range(layer):
                         shape += 1
                         start_node_pos = add_vectors(start_node_pos, chg_vectors[i])
-                        draw_graph(start_node_pos, lattice, shape, self.sides, vectors)
+                        draw_graph(start_node_pos, lattice, shape, self.sides, vectors, self.edgeLength)
         
         return lattice
 
@@ -329,3 +326,4 @@ class Octagon(RegularPolygon):
         IMPLEMENT DOCUMENTATION
         """
         super().__init__(8, edgeLength, rotation)
+

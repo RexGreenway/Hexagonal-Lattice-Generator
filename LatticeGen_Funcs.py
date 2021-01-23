@@ -27,22 +27,23 @@ def my_line(img, start, end):
 ## VECTOR MANIPULATION ##
 def add_vectors(a, b):
     new_val = np.array(a) + np.array(b)
-    new_val = (round(new_val[0], 3), round(new_val[1], 3))
+    new_val = (round(new_val[0], 6), round(new_val[1], 6))
     return new_val
 
 ## DRAWS SHAPES
-def draw_graph(node_pos, graph, shapeName, sides, vectors):
+def draw_graph(node_pos, graph, shapeName, sides, vectors, edgeLength):
     counter = 0
     edge_dict = {}
     # Add Nodes
     for k in range(sides):
         node_dict = nx.get_node_attributes(graph, "pos")
-        if node_pos in node_dict.values():
-            node_pos_index = list(node_dict.values()).index(node_pos)
-            node = list(node_dict.keys())[(node_pos_index)]
-            counter += 1
-            edge_dict[counter] = node
-        else:
+        found = False
+        for key in node_dict.keys():
+            if (node_pos[0] - node_dict[key][0])**2 + (node_pos[1] - node_dict[key][1])**2 < (edgeLength/10)**2:
+                counter += 1
+                edge_dict[counter] = key
+                found = True
+        if found == False:
             graph.add_node(shapeName + k/10, pos = node_pos)
             counter += 1
             edge_dict[counter] = shapeName + k/10
