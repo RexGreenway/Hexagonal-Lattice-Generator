@@ -14,7 +14,7 @@ Features so far:
 - Methods to generate and draw lattices for squares and hexagons.
 
 Completed:
-- - Re-work graph generation process to remove unoptimised creation and deletion of nodes and edges.
+- Re-work graph generation process to remove unoptimised creation and deletion of nodes and edges.
 
 To be completed:
 - Triangle Lattice Generation
