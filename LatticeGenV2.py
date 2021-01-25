@@ -5,7 +5,7 @@ import numpy as np
 from math import sin, cos, radians, sqrt, pi
 import matplotlib.pyplot as plt
 
-from LatticeGen_Funcs import my_filled_circle, my_line, add_vectors, draw_graph
+from LatticeGen_Funcs import my_filled_circle, my_line, add_vectors, draw_graph, change_to_cart
 
 ### CHILD CLASS of NetworkX GRAPH Class, to handle and manipulate polygons ###
 class Polygon(nx.Graph):
@@ -180,9 +180,62 @@ class Triangle(RegularPolygon):
         """
         IMPLEMENT DOCUMENTATION
         """
-        change_vectors = {}
-
+        base_vectors = {}
+        for i in range(2*self.sides):
+            base_vectors[i] = (self.edgeLength, 30 + (i + 1)*self.intAngle + self.rotation)
+        change_vectors = change_to_cart(base_vectors)
         return change_vectors
+    
+    def _generate_lattice_graph(self, layers, chg_vectors):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        # Generates the 2 (relected) triangles used.
+        cart_one = {}
+        for i in range(self.sides):
+            cart_one[i] = chg_vectors[2*i + 1]
+        cart_two = {}
+        for i in range(self.sides):
+            cart_two[i] = chg_vectors[len(chg_vectors) - (2*i + 1)]
+
+        rad_x = round(self.radius*cos(radians(self.rotation)), 3)
+        rad_y = round(self.radius*sin(radians(self.rotation)), 3)
+        radius_vec = (rad_x, rad_y)
+
+        lattice = nx.Graph()
+        shape = 0
+        origin_node_even = add_vectors((0, 0), radius_vec)
+        for layer in range(layers):
+            if layer == 0:
+                draw_graph(origin_node_even, lattice, shape, 3, cart_one, 1)
+            else:
+                if layer % 2 == 0: # Odd Layers
+                    origin_node_even = add_vectors(origin_node_even, chg_vectors[5])
+                    origin_node_even = add_vectors(origin_node_even, chg_vectors[4])
+                    node_pos = origin_node_even
+                    for i in range(3):
+                        for _ in range(int(layer/2)):
+                            shape += 1
+                            draw_graph(node_pos, lattice, shape, 3, cart_one, 1)
+                            node_pos = add_vectors(node_pos, chg_vectors[2*i])
+                        for _ in range(int(layer/2)):
+                            shape += 1
+                            draw_graph(node_pos, lattice, shape, 3, cart_one, 1)
+                            node_pos = add_vectors(node_pos, chg_vectors[(2*i) + 1])    
+                else: # Even Layers
+                    origin_node_even = add_vectors(origin_node_even, chg_vectors[2])
+                    node_pos = origin_node_even
+                    for i in range(3):
+                        for _ in range(int((layer + 1)/2)):
+                            shape += 1
+                            draw_graph(node_pos, lattice, shape, 3, cart_two, 1)
+                            node_pos = add_vectors(node_pos, chg_vectors[2*i])
+                        for _ in range(int((layer + 1)/2) - 1):
+                            shape += 1
+                            draw_graph(node_pos, lattice, shape, 3, cart_two, 1)
+                            node_pos = add_vectors(node_pos, chg_vectors[(2*i) + 1])
+        return lattice
+
 
 class Square(RegularPolygon):
     """
@@ -193,6 +246,12 @@ class Square(RegularPolygon):
         IMPLEMENT DOCUMENTATION
         """
         super().__init__(4, edgeLength, rotation)
+    
+    def _get_shape_num(self, layers):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        return int((1 + (layers - 1)*2)**2)
 
     def _generate_change_vectors(self): 
         """
@@ -201,11 +260,7 @@ class Square(RegularPolygon):
         polar_vectors = {}
         for i in range(self.sides):
             polar_vectors[i] = (self.edgeLength, i*self.theta + (180 - (self.intAngle/2)) + self.rotation)
-        edge_vectors = {}
-        for j in range(self.sides):
-            x = self.edgeLength*cos(radians(polar_vectors[j][1]))
-            y = self.edgeLength*sin(radians(polar_vectors[j][1]))
-            edge_vectors[j] = (round(x, 2), round(y, 2))
+        edge_vectors = change_to_cart(polar_vectors)
         return edge_vectors
 
     def _generate_lattice_graph(self, layers, chg_vectors):
@@ -255,6 +310,12 @@ class Hexagon(RegularPolygon):
         """
         super().__init__(6, edgeLength, rotation)
     
+    def _get_shape_num(self, layers):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        return int(1 + 6 * ((layers * (layers - 1)) / 2))
+    
     def _generate_change_vectors(self):
         """
         IMPLEMENT DOCUMENTATION
@@ -265,11 +326,7 @@ class Hexagon(RegularPolygon):
         base_vector = {}
         for i in range(self.sides):
             base_vector[i] = (vector_length, i*(self.theta) + self.theta/2 + self.rotation)
-        change_vectors = {}
-        for i in base_vector:
-            x = vector_length*cos(radians(base_vector[i][1]))
-            y = vector_length*sin(radians(base_vector[i][1]))
-            change_vectors[i] = (round(x, 2), round(y, 2))
+        change_vectors = change_to_cart(base_vector)
         return change_vectors
     
     def _generate_lattice_graph(self, layers, chg_vectors):
@@ -305,7 +362,6 @@ class Hexagon(RegularPolygon):
         return lattice
 
 
-
 class Septagon(RegularPolygon):
     """
     IMPLEMENT DOCUMENTATION
@@ -325,4 +381,3 @@ class Octagon(RegularPolygon):
         IMPLEMENT DOCUMENTATION
         """
         super().__init__(8, edgeLength, rotation)
-

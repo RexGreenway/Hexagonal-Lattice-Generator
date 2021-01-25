@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 import networkx as nx
+from math import sin, cos, radians
 
 ## OPENCV Drawing Tools ##
 # Draws red dot with radius 2 on img at specified center.
@@ -29,6 +30,15 @@ def add_vectors(a, b):
     new_val = np.array(a) + np.array(b)
     new_val = (round(new_val[0], 6), round(new_val[1], 6))
     return new_val
+
+def change_to_cart(dictionary):
+    temp = {}
+    for i in range(len(dictionary)):
+        x = dictionary[i][0]*cos(radians(dictionary[i][1]))
+        y = dictionary[i][0]*sin(radians(dictionary[i][1]))
+        temp[i] = (round(x, 3), round(y, 3))
+    return temp
+
 
 ## DRAWS SHAPES
 def draw_graph(node_pos, graph, shapeName, sides, vectors, edgeLength):
