@@ -15,9 +15,9 @@ Features so far:
 
 Completed:
 - Re-work graph generation process to remove unoptimised creation and deletion of nodes and edges.
+- Triangle Lattice Generation.
 
 To be completed:
-- Triangle Lattice Generation
 - Move all libraries (except networkx) to supplimentry file.
 - Add thourough documentation to all classes.
 - Add additional useful methods to relevant classes. 
