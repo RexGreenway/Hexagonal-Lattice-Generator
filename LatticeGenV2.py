@@ -113,6 +113,14 @@ class RegularPolygon(Polygon):
         """
         IMPLEMENT DOCUMENTATION
         """
+        
+        # polar_vectors = {}
+        # for i in range(self.sides):
+        #     polar_vectors[i] = (self.edgeLength, i*self.theta + self.rotation)
+        
+        # chg_vectors = change_to_cart(polar)
+        # start_pos = add_vectors((0, 0), )
+
         pos = []
         for i in range(self.sides):
             x = self.radius*cos(radians(i*self.theta + self.rotation))
@@ -207,7 +215,7 @@ class Triangle(RegularPolygon):
         origin_node_even = add_vectors((0, 0), radius_vec)
         for layer in range(layers):
             if layer == 0:
-                draw_graph(origin_node_even, lattice, shape, 3, cart_one, 1)
+                draw_graph(origin_node_even, lattice, shape, cart_one, 1)
             else:
                 if layer % 2 == 0: # Odd Layers
                     origin_node_even = add_vectors(origin_node_even, chg_vectors[5])
@@ -216,11 +224,11 @@ class Triangle(RegularPolygon):
                     for i in range(3):
                         for _ in range(int(layer/2)):
                             shape += 1
-                            draw_graph(node_pos, lattice, shape, 3, cart_one, 1)
+                            draw_graph(node_pos, lattice, shape, cart_one, 1)
                             node_pos = add_vectors(node_pos, chg_vectors[2*i])
                         for _ in range(int(layer/2)):
                             shape += 1
-                            draw_graph(node_pos, lattice, shape, 3, cart_one, 1)
+                            draw_graph(node_pos, lattice, shape, cart_one, 1)
                             node_pos = add_vectors(node_pos, chg_vectors[(2*i) + 1])    
                 else: # Even Layers
                     origin_node_even = add_vectors(origin_node_even, chg_vectors[2])
@@ -228,11 +236,11 @@ class Triangle(RegularPolygon):
                     for i in range(3):
                         for _ in range(int((layer + 1)/2)):
                             shape += 1
-                            draw_graph(node_pos, lattice, shape, 3, cart_two, 1)
+                            draw_graph(node_pos, lattice, shape, cart_two, 1)
                             node_pos = add_vectors(node_pos, chg_vectors[2*i])
                         for _ in range(int((layer + 1)/2) - 1):
                             shape += 1
-                            draw_graph(node_pos, lattice, shape, 3, cart_two, 1)
+                            draw_graph(node_pos, lattice, shape, cart_two, 1)
                             node_pos = add_vectors(node_pos, chg_vectors[(2*i) + 1])
         return lattice
 
@@ -279,12 +287,12 @@ class Square(RegularPolygon):
             radius_vec = (round((layer*2*rad_x) + rad_x, 2), round((layer*2*rad_y) + rad_y, 2))
             start_node_pos = add_vectors((0, 0), radius_vec)
             if layer == 0:
-                draw_graph(start_node_pos, lattice, shape, self.sides, chg_vectors, self.edgeLength)
+                draw_graph(start_node_pos, lattice, shape, chg_vectors, self.edgeLength)
                 shape += 1
             else:
                 for i in range(self.sides):
                     for _ in range(even_numbers[layer]):
-                        draw_graph(start_node_pos, lattice, shape, self.sides, chg_vectors, self.edgeLength)
+                        draw_graph(start_node_pos, lattice, shape, chg_vectors, self.edgeLength)
                         start_node_pos = add_vectors(start_node_pos, chg_vectors[i])
                         shape += 1
         return lattice
@@ -349,15 +357,15 @@ class Hexagon(RegularPolygon):
         for layer in range(layers):
             if layer == 0:
                 start_node_pos = add_vectors((0, 0), radius_vec)
-                draw_graph(start_node_pos, lattice, 0, self.sides, vectors, self.edgeLength)
+                draw_graph(start_node_pos, lattice, 0, vectors, self.edgeLength)
             else:
                 start_node_pos = add_vectors(start_node_pos, chg_vectors[4])
-                draw_graph(start_node_pos, lattice, shape, self.sides, vectors, self.edgeLength)
+                draw_graph(start_node_pos, lattice, shape, vectors, self.edgeLength)
                 for i in range(self.sides):
                     for _ in range(layer):
                         shape += 1
                         start_node_pos = add_vectors(start_node_pos, chg_vectors[i])
-                        draw_graph(start_node_pos, lattice, shape, self.sides, vectors, self.edgeLength)
+                        draw_graph(start_node_pos, lattice, shape, vectors, self.edgeLength)
         
         return lattice
 
@@ -381,3 +389,8 @@ class Octagon(RegularPolygon):
         IMPLEMENT DOCUMENTATION
         """
         super().__init__(8, edgeLength, rotation)
+
+
+test = Triangle(5, 20)
+testLat = test.generate_lattice(3)
+test.draw_shape(testLat)
