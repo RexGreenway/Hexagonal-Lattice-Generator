@@ -389,8 +389,3 @@ class Octagon(RegularPolygon):
         IMPLEMENT DOCUMENTATION
         """
         super().__init__(8, edgeLength, rotation)
-
-
-test = Triangle(5, 20)
-testLat = test.generate_lattice(3)
-test.draw_shape(testLat)
