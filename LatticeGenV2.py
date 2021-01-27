@@ -203,9 +203,7 @@ class Polygon(Shape):
         IMPLEMENT DOCUMENTATION
         """
         super().__init__()
-
         self.can_lattice = self._get_lattice_state()
-        ## DUNNO???
     
     def generate_polygon(self, vertex_pos, shape_name, vectors):
         """
@@ -326,9 +324,7 @@ class RegularPolygon(Polygon):
         return
 
 
-#################################################################
-
-################## DEFAULT REGULAR POLYGON ######################
+################## DEFAULT REGULAR POLYGONS ######################
 
 
 class Triangle(RegularPolygon):
