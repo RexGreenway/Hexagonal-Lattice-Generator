@@ -17,7 +17,8 @@ Completed:
 
 To be completed:
 - Add thorough documentation to all classes.
-- Add additional useful methods to relevant classes (translate_shape, rotate_shape, resize_shape, ...). 
+- Add additional useful methods to relevant classes (translate_shape, rotate_shape, resize_shape, ...).
+- Generate Non-Circular Lattices ("stacked").
 - Structure to build and work with non-regular polygons, including defaults such as Rectangale, Parallelogram, and Triangle variations.
 - Introduce factory to dynamically cast correct object instance when called.
 
