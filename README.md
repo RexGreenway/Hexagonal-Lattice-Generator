@@ -1,30 +1,31 @@
 # Lattice Generator
 By Rex Greenway
 
-This small project uses python libraries networkx, numpy, and OpenCV to generate and draw lattices layer by layer, working out from the centre.
+This project aims to allow for the investigation of shapes in the R x R Cartesian Plane and their lattices. This Python library provides the functionality to generate work with, view, and manipulate polygons in the 2D space and, for applciable shapes, generate the corresponding lattice in circular layers. (Currently also utilises OpenCV and Numpy)
+https://github.com/RexGreenway/Lattice-Generator.git
 
-# V1) 2 simple and unoptimised files producing specific lattices. 
-- Hexagon - Generates lattice of hexagons with desired edge length and number of layers input by the user.
-- Parrallogram - Generates lattice of paralleograms, with changable internal angle, to fit within a given circle.
-
-# V2) (In progress..) Designed as a class based extention to the NetworkX library to work with, view, and manipulate polygons.
+# Version 2) (In progress..)
 Features so far:
-- Basic class structure for Regular Polygons.
-- Methods to generate and draw Regular Polygons.
-- Methods to generate and draw lattices for squares and hexagons.
+- Basic class structure for Polygons.
+- Methods to generate and draw Regular Polygons, and some regular polygon defaults.
+- Lattice generation for squares and hexagons.
 
 Completed:
-- Re-work graph generation process to remove unoptimised creation and deletion of nodes and edges.
-- Triangle Lattice Generation.
+- Re-worked graph generation process to remove unoptimised creation and deletion of vertices and edges.
+- Triangle lattice generation.
+- Lattice Class and method get_shape_num which retrieves the number of shapes in the lattice.
 
 To be completed:
-- Move all libraries (except networkx) to supplimentry file.
-- Add thourough documentation to all classes.
-- Add additional useful methods to relevant classes. 
-- Structure to build and work with non-regular polygons.
+- Add thorough documentation to all classes.
+- Add additional useful methods to relevant classes (translate_shape, rotate_shape, resize_shape, ...). 
+- Structure to build and work with non-regular polygons, including defaults such as Rectangale, Parallelogram, and Triangle variations.
 - Introduce factory to dynamically cast correct object instance when called.
 
 Possibilty:
-- Functionality to dynamically detect whether or not a user built shape is able to be tessalated?  
+- Functionality to dynamically detect whether or not a user built shape is able to be tessalated/ lattice?
 
-https://github.com/RexGreenway/Lattice-Generator.git
+# Version 1) (Legacy)
+Two simple and unoptimised files, using networkx, numpy, opencv, and the maths module to produce specific lattices. 
+- Hexagon - Generates lattice of hexagons with desired edge length and number of layers input by the user.
+- Parrallogram - Generates lattice of paralleograms, with changable internal angle, to fit within a given circle.
+
