@@ -215,7 +215,7 @@ class Polygon(Shape):
             found = False
             for key in vertex_dict.keys():
                 edge_length = round(sqrt(abs((vertex_dict[key][0])**2 + (vertex_dict[key][1])**2)), 3)
-                if (vertex_pos[0] - vertex_dict[key][0])**2 + (vertex_pos[1] - vertex_dict[key][1])**2 < (edge_length/10)**2: ## Change to edge_length!!
+                if (vertex_pos[0] - vertex_dict[key][0])**2 + (vertex_pos[1] - vertex_dict[key][1])**2 <= (edge_length/100)**2: ## Change to edge_length!!
                     edge_list.append(key)
                     found = True
             if found == False:
@@ -226,8 +226,26 @@ class Polygon(Shape):
             self.add_edge(edge_list[e], edge_list[e + 1])
         self.add_edge(edge_list[len(vectors) - 1], edge_list[0])
 
+    def generate_shapes_lattice(self, layers):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        if self.can_lattice:
+            chg_vectors = self._generate_change_vectors()
+            return self._generate_lattice_graph(layers, chg_vectors)
+            
+        else:
+            print("LATTICE NOT POSSIBLE WITH THIS SHAPE")
+
     @abc.abstractmethod
-    def _generate_polygon_vectors(self, sides):
+    def _generate_change_vectors(self):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        return
+
+    @abc.abstractmethod
+    def _generate_lattice_graph(self, layer, chg_vectors):
         """
         IMPLEMENT DOCUMENTATION
         """
@@ -259,7 +277,7 @@ class RegularPolygon(Polygon):
             raise ValueError("Argument 'sides' = {self.sides}. A regular polygon have at least 3 sides.".format(self=self))
         elif self.edge_length < 0:
             raise ValueError("Argument 'edge_length' = {self.edge_length}. Edges cannot be of negative length.".format(self=self))
-        elif not check_if_coord(centre):
+        elif not check_if_coord(self.centre):
             raise ValueError("Argument 'centre' = {self.centre}. Centre must be a cartesian coordinate.".format(self=self))
         elif self.rotation < - 360 and self.rotation > 360:
             raise ValueError("Argument 'rotation' = {self.rotation}. Shape rotations should be within range (-360, 360).".format(self=self))
@@ -298,33 +316,9 @@ class RegularPolygon(Polygon):
         lattice_test = 360/self.intAngle
         return lattice_test.is_integer()
     
-    def generate_shapes_lattice(self, layers):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        if self.can_lattice:
-            chg_vectors = self._generate_change_vectors()
-            return self._generate_lattice_graph(layers, chg_vectors)
-            
-        else:
-            print("LATTICE NOT POSSIBLE WITH THIS SHAPE")
+    
 
-    @abc.abstractmethod
-    def _generate_change_vectors(self):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        return
-
-    @abc.abstractmethod
-    def _generate_lattice_graph(self, layer, chg_vectors):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        return
-
-
-################## DEFAULT REGULAR POLYGONS ######################
+################## DEFAULT REGULAR POLYGON ######################
 
 
 class Triangle(RegularPolygon):
@@ -509,6 +503,135 @@ class Octagon(RegularPolygon):
         super().__init__(8, edge_length, centre, rotation)
 
 
+############################################################################################
+
+
+class NonRegularPolygon(Polygon):
+    """
+    IMPLEMENT DOCUMENTATION
+    """
+    def __init__(self, start_point, rotation):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        super().__init__()
+        self.start_point = start_point
+        self.rotation = rotation
+        self.polygon_vectors = self._generate_polygon_vectors()
+
+        self.generate_polygon(start_point, 0, self.polygon_vectors)
+    
+    # Future Method For Non-Regs
+    def get_centroid(self):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        return
+    
+    @abc.abstractmethod
+    def _generate_polygon_vectors(self):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        return
+
+class FourSided(Polygon):
+    """
+    IMPLEMENT DOCUMENTATION
+    """    
+    def _generate_change_vectors(self): 
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        return self.polygon_vectors
+    
+    def _generate_lattice_graph(self, layers, chg_vectors): 
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        lattice = Lattice(4, layers)
+        
+        radius_vec = add_vectors(self.polygon_vectors[2], self.polygon_vectors[3])
+
+        even_numbers = list(range(0, 2*layers, 2))
+        shape = 0
+        for layer in range(layers):
+            if layer == 0:
+                lattice.generate_polygon(self.start_point, shape, chg_vectors)
+                shape += 1
+            else:
+                radius_vec = (round((layer*radius_vec[0]), 3), round((layer*radius_vec[1]), 3))
+                start_vertex_pos = add_vectors(self.start_point, radius_vec)
+                for i in range(4):
+                    for _ in range(even_numbers[layer]):
+                        lattice.generate_polygon(start_vertex_pos, shape, chg_vectors)
+                        start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[i])
+                        shape += 1
+        return lattice
+
+class Rectangle(NonRegularPolygon, FourSided):
+    """
+    IMPLEMENT DOCUMENTATION
+    """
+    def __init__(self, width, height, start_point = (0, 0), rotation = 0):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        self.height = height
+        self.width = width
+        super().__init__(start_point, rotation)
+
+    def _generate_polygon_vectors(self):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        vectors = {}
+        for i in range(0, 4, 2):
+            height_polar = (self.height, (i + 1)*90 + self.rotation)
+            width_polar = (self.width, (i + 2)*90 + self.rotation)
+            vectors[i] = height_polar
+            vectors[i + 1] = width_polar
+        return change_to_cart_dict(vectors)
+    
+    def _get_lattice_state(self):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        return True
+    
+
+class Parallelogram(NonRegularPolygon, FourSided):
+    """
+    IMPLEMENT DOCUMENTATION
+    """
+    def __init__(self, width, height, angle, start_point = (0, 0), rotation = 0):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        self.height = height
+        self.width = width
+        self.angle = angle
+        super().__init__(start_point, rotation)
+
+    def _generate_polygon_vectors(self):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        vectors = {}
+        for i in range(0, 4, 2):
+            height_polar = (self.height, (i + 1)*90 + self.angle + self.rotation)
+            width_polar = (self.width, (i + 2)*90 + self.rotation)
+            vectors[i] = height_polar
+            vectors[i + 1] = width_polar
+        return change_to_cart_dict(vectors)
+    
+    def _get_lattice_state(self):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        return True
+
+        
 class Lattice(Polygon):
     """
     IMPLEMENT DOCUMENTATION
@@ -529,3 +652,4 @@ class Lattice(Polygon):
             return int(1 + self.sides*(self.layers*(self.layers - 1)/2))
         elif self.sides % 4 == 0:
             return int((1 + 2*(self.layers - 1))**2)
+
