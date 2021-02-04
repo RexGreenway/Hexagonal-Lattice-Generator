@@ -535,23 +535,17 @@ class NonRegularPolygon(Polygon):
         """
         return
 
-class FourSided(Polygon):
+class _FourSided(Polygon):
     """
     IMPLEMENT DOCUMENTATION
     """    
-    def _generate_change_vectors(self): 
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        return self.polygon_vectors
-    
     def _generate_lattice_graph(self, layers, chg_vectors): 
         """
         IMPLEMENT DOCUMENTATION
         """
         lattice = Lattice(4, layers)
         
-        radius_vec = add_vectors(self.polygon_vectors[2], self.polygon_vectors[3])
+        radius_vec = add_vectors(chg_vectors[2], chg_vectors[3])
 
         even_numbers = list(range(0, 2*layers, 2))
         shape = 0
@@ -569,7 +563,7 @@ class FourSided(Polygon):
                         shape += 1
         return lattice
 
-class Rectangle(NonRegularPolygon, FourSided):
+class Rectangle(NonRegularPolygon, _FourSided):
     """
     IMPLEMENT DOCUMENTATION
     """
@@ -580,6 +574,12 @@ class Rectangle(NonRegularPolygon, FourSided):
         self.height = height
         self.width = width
         super().__init__(start_point, rotation)
+    
+    def _generate_change_vectors(self): 
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        return self.polygon_vectors
 
     def _generate_polygon_vectors(self):
         """
@@ -600,7 +600,7 @@ class Rectangle(NonRegularPolygon, FourSided):
         return True
     
 
-class Parallelogram(NonRegularPolygon, FourSided):
+class Parallelogram(NonRegularPolygon, _FourSided):
     """
     IMPLEMENT DOCUMENTATION
     """
@@ -612,6 +612,12 @@ class Parallelogram(NonRegularPolygon, FourSided):
         self.width = width
         self.angle = angle
         super().__init__(start_point, rotation)
+
+    def _generate_change_vectors(self): 
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        return self.polygon_vectors
 
     def _generate_polygon_vectors(self):
         """
