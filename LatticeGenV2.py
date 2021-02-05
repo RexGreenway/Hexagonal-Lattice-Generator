@@ -699,8 +699,8 @@ class EquilateralTriangle(RegularPolygon):
 
     def _generate_change_vectors(self):
         """
-        Private method to generate the lattice change vectors. For triangles these are 6 vectors correspoding to the edge_vectors, 2
-        for each edge - 1 vector for each direction along the edge.
+        Private method to generate the lattice change vectors. For triangles these are 6 vectors correspoding 
+        to the edge_vectors; 2 for each edge, 1 vector for each direction along the edge.
 
         Parameters:
             Nothing
