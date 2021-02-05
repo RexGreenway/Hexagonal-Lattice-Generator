@@ -1127,17 +1127,3 @@ class Lattice(Polygon):
             return int(1 + self.sides*(self.layers*(self.layers - 1)/2))
         elif self.sides % 4 == 0:
             return int((1 + 2*(self.layers - 1))**2)
-
-
-test_vec = {
-    0: (3, 0),
-    1: (0, 1),
-    2: (-1, 1),
-    3: (-1, 0)
-}
-
-test = Square(2)
-lat = test.generate_lattice_circular(2)
-print(test.vertices)
-print(lat.vertices)
-lat.draw_shape()
