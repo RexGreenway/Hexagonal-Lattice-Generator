@@ -2,78 +2,182 @@ import abc
 import cv2 as cv
 import numpy as np
 from math import sqrt, sin, cos, radians
-from LatticeGen_Funcs import add_vectors, change_to_cart_dict, change_to_cart_vector, check_if_coord, my_filled_circle, my_line
+from functions import add_vectors, change_to_cart_dict, change_to_cart_vector, check_if_coord, my_filled_circle, my_line
 
+## Potential Library Name: 'polylat', or 'polylatlib'
+
+# Temp Colour List
 colours = ["black", "red", "green", "blue", "yellow", "orange", "purple"]
 
 ### SHAPE (Parent Base Class) ###
 class Shape():
     """
-    Shape is the base parent class for all shape objects.
+    Shape is the base parent class for all shape objects. This class implements the basic features
+    and methods of vertices and edges for all shapes. 
     
-    This class implements the basic features of vertices and edges in all shapes. 
+    Example
+    -------
+    >>> PUT EXAMPLE HERE!!!!!!
 
-    The shape class includes all the methods related specifically to vertices and edges. Through these
-    methods the shape can be built piece-meal with the addition of vertices and edges to the shape
-    object, as well as be used to update information dictionaries (using the '.update_' methods), or
-    retrieve a vertex's, or edge's, specific property property dictionary (using the '.get_' methods).
+    Notes
+    -----
+    The shape class includes all the methods related specifically to vertices and edges. Through
+    these methods the shape can be built piece-meal with the addition of vertices and edges to the
+    shape object, as well as be used to update vertex information (using the '.update_' methods),
+    or retrieve a vertex's, or edge's, specific property dictionary (using the '.get_' methods).
 
-    The final method of the shape object (currently) utilises the OpenCV library to create and canvas
-    and draw the created shape.
+    The final method of the shape object (currently) utilises the OpenCV library to create and
+    canvas and draw the created shape.
     """
     def __init__(self):
         """
-        When initialised all shape objects have 4 lists pertaining to the basic vertex and edge
-        features of shapes.
-        
-        Vertices:
-            '.vertices' is the simple list of all vertex names.
-            '.vertices_info' is the list of tuples of vertices along with their associated
-            infomation dictionary. This dictionary contains the vertex properties position, size, and
-            colour.
-        
-        Edges:
-            '.edges' is the simple list of edges. Edges are stored as 2-tuples of the vertices at either
-            end of the edge.
-            '.edge_info' is the list of tuples of edges along with their associated information dictionary.
+        Initialise a Shape object to be populated with vertices and edges.
+
+        Attributes
+        ----------
+        .vertices :  The list of all vertex names.
+        .vertices_info : The list of vertex tuples of vertices along with their associated property
+            dictionary. This dictionary contains the vertex properties position, size, and colour.
+        .edges :  The list of edges. Edges are stored as 2-tuples of the vertices at either end of
+            the edge.
+        .edge_info : The list of tuples of edges along with their associated information dictionary.
             This dictionary contains the edge weight and colour.
+
+        Example
+        -------
+        >>> A = Shape()
+        >>> for i in range(5):
+        >>>     A.add_vertex(i) # adding veritces 0 through 4 to A.
+        >>> A.add_edge(0, 1)
+        >>> A.add_edge(1, 8, 4)
+        >>> print(A.vertices)
+        [0, 1, 2, 3, 4, 8]
+        >>> print(A.edges_info)
+        [((0, 1), {weight: 1, colour: "black"}), ((1, 8), {weight: 4, colour: "black"})]
+
+        Notes
+        -----
+        When initialised a Shape is an empty object with the capacity for the addition of vertices
+        and edges.
         """
         self.vertices = []
         self.vertices_info = []
         self.edges = []
         self.edges_info = []
-
-    # Vertex Methods:
-    def add_vertex(self, vertex_for_adding, position = None, size = 1, colour = "black"):
+    
+    def __str__(self):
         """
-        Adds a desired vertex to the shape, with associated properties; positon, size, and colour.
+        Returns a logical summary of the shape.
 
-        Error Handling: This method completes 2 checks. The first is to ensure that the vertex added does
-            not already exist. The second ensures that the 'postion' value is a cartesian coordinate if
-            defined.   
+        Returns
+        -------
+        info : string
+            Basic information opf the shape object. Indicates the shape type, number of verticies,
+            and number of sides.
 
-        Parameters:
-            - vertex_for_adding:
-                type: Any (preferred type: string, int, or float).
-                description: The desired name for the vertex. 
-            - position:
-                default: None,
-                type: (x, y) - Cartesian Coordinate (2-tuple with x, y values: int or float),
-                description: The desired position for the vertex. New vertices have no postion by deafult
-                    allowing for the creation of a graph like object.
-            - size:
-                default: 1,
-                type: int,
-                description: Size property to be ustilised upon drawing of the shape.
-            - colour:
-                deafult: "black"
-                type: string - from list of predefined 'colours'.
-                description: Colour property to be utilisied upon drawing of the shape.
+        Example
+        -------
+        >>> A = Shape()
+        >>> for in in range(5):
+        >>>     A.add_edge(i, i + 1)
+        >>> print(A)
+        Shape:
+        - Num. of Vertices: 6,
+        - Num. of Edges: 5
+        """
+        return type(self).__name__ + f":\n- Num. of Vertices: {len(self.vertices)},\n- Num. of Edges: {len(self.edges)}.".format(self=self)
+
+    def __len__(self):
+        """
+        Returns the number of edges (i.e number of sides) in the shape. Use: 'len(A)'.
+
+        Returns
+        -------
+        sides : int
+            Number of edges in the shape.
+
+        Example
+        -------
+        >>> A = Shape()
+        >>> for in in range(5):
+        >>>     A.add_edge(i, i + 1)
+        >>> print(len(A))
+        5
+        """
+        return len(self.edges)
+    
+    def __contains__(self, a):
+        """
+        Returns True if a vertex or edge exists in the shape, False otherwise.
+
+        Example
+        -------
+        >>> A = EquilateralTriangle()
+        >>> ("0-0", "0-1") in A
+        True
+        """
+        # First Checks if input could be an edge
+        if type(a) == tuple and len(a) == 2:
+            # checks both edge directions
+            for edge in [a, (a[1], a[0])]:
+                if edge in self.edges:
+                    return True
+        # Otherwise checks against vertices
+        else:
+            try:
+                return a in self.vertices
+            except TypeError:
+                return False
+
+    def add_vertex(self, vertex_for_adding, position = None, size: int = 1, colour = "black"):
+        """
+        Adds a desired vertex to the shape, with associated properties; positon, size, and colour. 
+
+        Parameters
+        ----------
+        vertex_for_adding : vertex,
+            The desired name for a vertex in the shape. These can be strings, numbers, or
+            collections.
+        position : (x, y) - 2D Cartesian Coordinate, Default = None, optional
+            The desired position for the vertex in the form of a coordinate 2-tuple. New vertices
+            have no postion by deafult allowing for the creation of a graph-like object.
+        size : int, Default = 1, optional
+            Size property to be ustilised upon drawing of the shape.
+        colour : colour, Default = "black", optional
+            Colour property to be utilisied upon drawing of the shape. Colour can be chosen from
+            list of options; black, red, green, blue, yellow, orange, purple, ...
+
+        Example
+        -------
+        >>> A = Shape()
+        >>> A.add_vertex(1) # 'Abstract' vertex called '1' with no position.
+        >>> A.add_vertex("Hello", (2, 3))   # A vertex called 'Hello' at position (2, 3).
+        >>> A.add_vertex("example", colour = "red")
+        >>> print(A.vertices)
+        [1, "Hello", "example"]
+
+        Notes
+        -----
+        A vertex is a point in space that can exist independently, or as the end of an 
+        edge/ multiple edges. You cannot have multiple vertices of the same name, though you can
+        have multiple vertices occupying the same position. Vertex properties are its position,
+        size, and colour.
         
-        Returns:
-            Nothing
+        If initialised with no position the vertex can be considered an 'abstract' vertex with
+        position = None. This vertex is more akin to a node in a graph-like object and can still be
+        utilisied in the creation of edges resulting in a shape with no set strucutre except for
+        defined edges and vertices.
+
+        When initialised with a position the vertex becomes a recognisable shape in the R x R 
+        Cartesian space with an x and y position. This position can also be imagined as the vector
+        from the origin to the point of the vertex.
+
+        Size and colour are utilisied in the drawing of the shape with size indicating the radius
+        of the circle drawn at the vertex point. Colour is self-explanatory.
         """
+        # Checks vertex does not already exist
         if vertex_for_adding not in self.vertices:
+            # Checks position of vertex is Cartesian coord. or None
             if check_if_coord(position) or position == None:
                 self.vertices.append(vertex_for_adding)
                 info = {
@@ -87,110 +191,136 @@ class Shape():
         else:
             raise ValueError("This vertex already exists.")
 
-    def _update_vertex_attribute(self, vertex_for_update, attr, value):
+    def _update_vertex_property(self, vertex_for_update, prop, value):
         """
         Private method for updating any of the vertex properties.
-        
-        Error Handling: Ensures existence of the desired vertex.
 
-        Parameters:
-            - vertex_for_update:
-                type: Any (preferred type: string, int, or float).
-                description: A prexisting vertex in the shape to be updated.
-            - attr:
-                type: string,
-                description: The desired vertex property for update, options of "position", "size", or
-                    "colour".
-            - value:
-                type: Dependent upon desired attribute,
-                description: New value to be inserted into vertex information dictionary for desired attribute.
-        
-        Returns:
-            Nothing
+        Parameters
+        ----------
+        vertex_for_update : vertex
+            A prexisting vertex in the shape to be updated.
+        property : "position", "size", or "colour"
+            The desired vertex property for update.
+        value : property dependent value
+            New value to be inserted into vertex information dictionary for desired attribute.
         """
+        # Checks vertex existence
         try:
             index = self.vertices.index(vertex_for_update)
-            self.vertices_info[index][1][attr] = value
+            self.vertices_info[index][1][prop] = value
         except:
             raise ValueError("The vertex entered does not exist.")
     
     def update_vertex_position(self, vertex_for_update, value):
         """
-        Updates the vertex position. Uses the private method '_update_vertex_attribute'.
+        Updates the vertex position.
 
-        Error Handling: Value Error thrown if 'value' is not a cartesian coordinate.
-
-        Parameters:
-            - vertex_for_update:
-                type: Any (preferred type: string, int, or float).
-                description: A prexisting vertex in the shape to be updated.
-            - value:
-                type: (x, y) - Cartesian Coordinate (2-tuple with x, y values: int or float),
-                description: New position to be inserted into vertex's information dictionary.
+        Parameters
+        ----------
+        vertex_for_update : vertex
+            A prexisting vertex in the shape to be updated.
+        value : (x, y) - 2D Cartesian Coordinate
+            New position to be inserted into vertex's information dictionary.
         
-        Returns:
-            Nothing
+        Example
+        -------
+        >>> A = Shape()
+        >>> A.add_vertex("xmpl", (2, 3))
+        >>> print(A.vertices_info)
+        [("xmpl", {position: (2, 3), size: 1, colour: "black"})]
+        >>> A.update_vertex_position("xmpl", (0, 0))    # move "xmpl" to the origin.
+        >>> print(A.vertices_info)
+        [("xmpl", {position: (0, 0), size: 1, colour: "black"})]
+
+        Notes
+        -----
+        This method takes a prexisting vertex within the shape and proceeds to update its position
+        property in the vertex's infomation dictionary.
         """
+        # Checks if value input is a cartesian coordinate
         if check_if_coord(value):
-            self._update_vertex_attribute(vertex_for_update, "position", value)
+            self._update_vertex_property(vertex_for_update, "position", value)
         else:
             raise ValueError(value, " - position should be a cartesian coordinate.")
     
     def update_vertex_size(self, vertex_for_update, value):
         """
-        Updates the vertex size.  Uses the private method '_update_vertex_attribute'.
+        Updates the vertex size.
 
-        Error Handling: Value Error thrown if 'value' is not an integer.
+        Parameters
+        ----------
+        vertex_for_update : vertex
+            A prexisting vertex in the shape to be updated.
+        value : int > 0
+            New size to be inserted into vertex's information dictionary.
 
-        Parameters:
-            - vertex_for_update:
-                type: Any (preferred type: string, int, or float).
-                description: A prexisting vertex in the shape to be updated.
-            - value:
-                type: int,
-                description: New size to be inserted into vertex's information dictionary.
+        Example
+        -------
+        >>> A = Shape()
+        >>> A.add_vertex("xmpl", (2, 3))
+        >>> print(A.vertices_info)
+        [("xmpl", {position: (2, 3), size: 1, colour: "black"})]
+        >>> A.update_vertex_size("xmpl", 100)    # scale "xmpl" to size 100.
+        >>> print(A.vertices_info)
+        [("xmpl", {position: (2, 3), size: 100, colour: "black"})]
         
-        Returns:
-            Nothing
+        Notes
+        -----
+        This method takes a prexisting vertex within the shape and proceeds to update its size
+        property in the vertex's infomation dictionary.
         """
-        if type(value) == int:
-            self._update_vertex_attribute(vertex_for_update, "size", value)
+        # Checks if size value is a positive integer
+        if type(value) == int and value > 0:
+            self._update_vertex_property(vertex_for_update, "size", value)
         else:
             raise ValueError(value, " - size should be an integer.")
 
     def update_vertex_colour(self, vertex_for_update, value):
         """
-        Updates the vertex colour.  Uses the private method '_update_vertex_attribute'.
+        Updates the vertex colour.
 
-        Error Handling: Value Error thrown if 'value' is not a predefined colour.
+        Parameters
+        ----------
+        vertex_for_update : vertex
+            A prexisting vertex in the shape to be updated.
+        value : colour
+            New colour to be inserted into vertex's information dictionary.
 
-        Parameters:
-            - vertex_for_update:
-                type: Any (preferred type: string, int, or float).
-                description: A prexisting vertex in the shape to be updated.
-            - value:
-                type: string - from list of predefined 'colours',
-                description: New colour to be inserted into vertex's information dictionary.
+        Example
+        -------
+        >>> A = Shape()
+        >>> A.add_vertex("xmpl", (2, 3))
+        >>> print(A.vertices_info)
+        [("xmpl", {position: (2, 3), size: 1, colour: "black"})]
+        >>> A.update_vertex_colour("xmpl", "green")    # change "xmpl" from black to green.
+        >>> print(A.vertices_info)
+        [("xmpl", {position: (2, 3), size: 1, colour: "green"})]
         
-        Returns:
-            Nothing
+        Notes
+        -----
+        This method takes a prexisting vertex within the shape and proceeds to update its colour
+        property in the vertex's infomation dictionary.
         """
+        # Checks if value is a supported colour
         if value in colours:
-            self._update_vertex_attribute(vertex_for_update, "colour", value)
+            self._update_vertex_property(vertex_for_update, "colour", value)
         else:
             raise ValueError(value, " - not a supported colour.")
 
     def _get_vertex_info(self, desired_info):
         """
-        Private method to get a specific property dictionary.
+        Private method to get a specific property dictionary for all vertices.
 
-        Parameters:
-            - desired_info:
-                type: string,
-                description: Desired property to return information about.
+        Parameters
+        ----------
+        desired_info : "position", "size", or "colour"
+            Desired property to return property dictionary for all vertices.
         
-        Returns:
-            vertex_info: Property dictionary with vertices as keys, and the associated property as values. 
+        Returns
+        -------
+        vertex_info : dictionary
+            Property dictionary with vertices as keys, and the desired property ('deired_info')
+            as values.
         """
         vertex_info = {}
         for vertex in self.vertices_info:
@@ -199,25 +329,51 @@ class Shape():
 
     def get_vertex_positions(self):
         """
-        Gets the property dictionary of vertex positions.
+        Returns the property dictionary of vertex positions.
 
-        Parameters:
-            Nothing
+        Returns
+        -------
+        vertex_info : dictionary
+            Position dictionary for all vertices in the shape. The vertices as keys and their
+            positions as the values.
+        
+        Example
+        -------
+        >>> A = Shape()
+        >>> for i in range(5):
+        >>>     A.add_vertex(i, (i + 1, i + 2))
+        >>> A.get_vertex_positions()
+        {0: (1, 2), 1: (2, 3), 2: (3, 4), 3: (4, 5), 4: (5, 6)}
 
-        Returns:
-            - vertex_info: Position dictionary for all vertices in the shape.
+        Notes
+        -----
+        This method returns a very usable collection of all vertices in the shape with their
+        associated position.
         """
         return self._get_vertex_info("position")
 
     def get_vertex_sizes(self):
         """
-        Gets the property dictionary of vertex sizes.
+        Returns the property dictionary of vertex sizes.
 
-        Parameters:
-            Nothing
+        Returns
+        -------
+        vertex_info : dictionary
+            Size dictionary for all vertices in the shape. The vertices as keys and their
+            sizes as the values.
+        
+        Example
+        -------
+        >>> A = Shape()
+        >>> for i in range(5):
+        >>>     A.add_vertex(i, size = (i + 1)*10)
+        >>> A.get_vertex_sizes()
+        {0: 10, 1: 20, 2: 30, 3: 40, 4: 50}
 
-        Returns:
-            - vertex_info: Size dictionary for all vertices in the shape.
+        Notes
+        -----
+        This method returns a very usable collection of all vertices in the shape with their
+        associated size.
         """
         return self._get_vertex_info("size")
     
@@ -225,43 +381,66 @@ class Shape():
         """
         Gets the property dictionary of vertex colours.
 
-        Parameters:
-            Nothing
+        Returns
+        -------
+        vertex_info : dictionary
+            Colour dictionary for all vertices in the shape. The vertices as keys and their
+            colours as the values.
+        
+        Example
+        -------
+        >>> A = Shape()
+        >>> for i in range(5):
+        >>>     A.add_vertex(i, colour = colours[i])
+        >>> A.get_vertex_colours()
+        {0: "black", 1: "red", 2: "green", 3: "blue", 4: "yellow"}
 
-        Returns:
-            - vertex_info: Colour dictionary for all vertices in the shape.
+        Notes
+        -----
+        This method returns a very usable collection of all vertices in the shape with their
+        associated colour.
         """
         return self._get_vertex_info("colour")
 
-
-    # Edge Methods:
     def add_edge(self, vertex_one, vertex_two, weight = 1, colour = "black"):
         """
-        Adds a desired edge to the shape between 2 vertices, with associated properties; weight and colour.
-        If either of the vertices does not already exist, these are also added to the shape.
+        Adds a desired edge to the shape between 2 vertices, with associated properties; weight and
+        colour.
 
-        Error Handling: Checks wether the edge already exists [This currently does not raise a value error as
-        these are then thrown during the 'draw_graph' function].
-
-        Parameters:
-            - vertex_one:
-                type: Any (preferred type: string, int, or float),
-                description: The vertex name for the first end of the edge.
-            - vertex_two:
-                type: Any (preferred type: string, int, or float),
-                description: The vertex name for the other end of the edge. 
-            - weight:
-                default: 1,
-                type: int,
-                description: Weight property to be utilisied upon drawing of the shape.
-            - colour:
-                deafult: "black"
-                type: string - from list of predefined 'colours'.
-                description: Colour property to be utilisied upon drawing of the shape.
+        Parameters
+        ----------
+        vertex_one : vertex
+            The vertex for the one end of the edge.
+        vertex_two : vertex
+            The vertex name for the other end of the edge. 
+        weight : int > 0, Default = 1, optional
+            Weight property to be utilisied upon drawing of the shape.
+        colour : colour, Default = "black", optional
+            Colour property to be utilisied upon drawing of the shape. Colour can be chosen from
+            list of options; black, red, green, blue, yellow, orange, purple, ...
         
-        Returns:
-            Nothing
+        Example
+        -------
+        >>> A = Shape()
+        >>> A.add_edge(1, 2) # Adding edge between to new vetrices, 1, and 2.
+        >>> A.add_edge("Hello", "World", 3) # An edge between 'Hello' and 'World' with weight 3.
+        >>> A.add_edge("Hello", "xmpl", colour = "red") # Establishing edge between exsiting
+                                                        vertex "Hello" and new vertex "xmpl".
+        >>> print(A.edges)
+        [(1, 2), ("Hello", "World"), ("Hello", "xmpl")]
+
+        Notes
+        -----
+        Edges are a connecting line between two vertices and are stored as a tuple of these two
+        defining vertex ends. You cannot have multiple edges between the same two vertices and thus
+        edges are uniquely defined by their vertex pair, this also means that (a, b) = (b, a). Edge
+        properies are weight and size. Weight references the 'thickness' of the edge line and colour
+        is self-explanatory. These properties utilised in the drawing of shapes. 
+
+        Vertices not pre-exsiting within the shape are automatically generated and added with no 
+        position and default size and colour.
         """
+        # Checks if edge (in either direction) pre-exists
         if (vertex_one, vertex_two) not in self.edges and (vertex_two, vertex_one) not in self.edges:
             self.edges.append((vertex_one, vertex_two))
             info = {
@@ -269,88 +448,111 @@ class Shape():
                 "colour": colour
             }
             self.edges_info.append((vertex_one, vertex_two, info))
+            # Adds new vertices if needed
             for vertex in (vertex_one, vertex_two):
                 if vertex not in self.vertices:
                     self.add_vertex(vertex)
+        # Currently passed as usage in "generate_polygon" causes error raised to be thrown.
+        # POTENTIAL FIX: make it not throw error in 'add' methods if pre-exist...?
         else:
             pass
     
-    def _update_edge_attribute(self, edge_for_update, attr, value):
+    def _update_edge_property(self, edge_for_update, prop, value):
         """
         Private method for updating any of the edge properties.
-        
-        Error Handling: Ensures existence of the desired edge, in either direction; (a, b) or (b, a).
 
-        Parameters:
-            - edge_for_update:
-                type: Edge-tuple,
-                description: A prexisting edge in the shape to be updated.
-            - attr:
-                type: string,
-                description: The desired edge property for update, options of "weight" or "colour".
-            - value:
-                type: Dependent upon desired attribute,
-                description: New value to be inserted into edge information dictionary for desired attribute.
-        
-        Returns:
-            Nothing
+        Parameters
+        ----------
+        edge_for_update : 2-tuple, vertex pair
+            A prexisting edge in the shape to be updated.
+        property: "weight" or "colour"
+            The desired edge property for update.
+        value: propery dependent value
+            New value to be inserted into edge information dictionary for desired attribute.
         """
+        # Checks existence of edge as input by user
         if edge_for_update in self.edges:
             index = self.edges.index(edge_for_update)
-            self.edges_info[index][2][attr] = value
+            self.edges_info[index][2][prop] = value
         else:
-            # Trys to find index of the reversed edge, this also checks its existence.
+            # Checks existence of oppossite direcvtion edge.
             try:
                 index = self.edges.index((edge_for_update[1], edge_for_update[0]))
-                self.edges_info[index][2][attr] = value
+                self.edges_info[index][2][prop] = value
             except:
                 raise ValueError("The edge entered does not exist.")
 
     def update_edge_weight(self, edge_for_update, value):
         """
-        Updates the edge weight. Uses the private method '_update_edge_attribute'.
+        Updates the edge weight.
 
-        Parameters:
-            - edge_for_update:
-                type: Edge-tuple,
-                description: A prexisting edge in the shape to be updated.
-            - value:
-                type: int,
-                description: New weight to be inserted into edges's information dictionary.
+        Parameters
+        ----------
+        edge_for_update : 2-tuple, vertex pair
+            A prexisting edge in the shape to be updated.
+        value : int > 0
+            New weight to be inserted into edges's information dictionary.
         
-        Returns:
-            Nothing
+        Example
+        -------
+        >>> A = Shape()
+        >>> A.add_edge("xmpl", 2)
+        >>> print(A.edges_info)
+        [(("xmpl", 2), {weight: 1, colour: "black"})]
+        >>> A.update_edge_weight(("xmpl", 2), 20)    # change edge's weight to 20.
+        >>> print(A.edges_info)
+        [(("xmpl", 2), {weight: 20, colour: "black"})]
+        
+        Notes
+        -----
+        This method takes a prexisting edge within the shape and proceeds to update its weight
+        property in the edge's infomation dictionary.
+
         """
-        self._update_edge_attribute(edge_for_update, "weight", value)
+        self._update_edge_property(edge_for_update, "weight", value)
 
     def update_edge_colour(self, edge_for_update, value):
         """
-        Updates the edge colour. Uses the private method '_update_edge_attribute'.
+        Updates the edge colour.
 
-        Parameters:
-            - edge_for_update:
-                type: Edge-tuple,
-                description: A prexisting edge in the shape to be updated.
-            - value:
-                type: string - from list of predefined 'colours',
-                description: New colour to be inserted into edges's information dictionary.
+        Parameters
+        ----------
+        edge_for_update : 2-tuple, vertex pair
+            A prexisting edge in the shape to be updated.
+        value : colour
+            New colour to be inserted into edges's information dictionary.
         
-        Returns:
-            Nothing
+        Example
+        -------
+        >>> A = Shape()
+        >>> A.add_edge("xmpl", 2)
+        >>> print(A.edges_info)
+        [(("xmpl", 2), {weight: 1, colour: "black"})]
+        >>> A.update_edge_colour(("xmpl", 2), "yellow")    # change edge's colour to yellow.
+        >>> print(A.edges_info)
+        [(("xmpl", 2), {weight: 2, colour: "yellow"})]
+        
+        Notes
+        -----
+        This method takes a prexisting edge within the shape and proceeds to update its colour
+        property in the edge's infomation dictionary.
         """
-        self._update_edge_attribute(edge_for_update, "colour", value)
+        self._update_edge_property(edge_for_update, "colour", value)
     
     def _get_edge_info(self, desired_info):
         """
-        Private method to get a specific property dictionary.
+        Private method to get a specific property dictionary for all edges in the shape.
 
-        Parameters:
-            - desired_info:
-                type: string,
-                description: Desired property to return information about.
+        Parameters
+        ----------
+        desired_info : "weight" or "colour"
+            Desired property to return information about.
         
-        Returns:
-            edge_info: Property dictionary with edges as keys, and the associated property as values. 
+        Returns
+        -------
+        edge_info : dictionary
+            Property dictionary with edges as keys, and the desired property ('desired_info') as
+            values.
         """
         edge_info = {}
         for edge in self.edges_info:
@@ -359,49 +561,157 @@ class Shape():
 
     def get_edge_weights(self):
         """
-        Gets the property dictionary of edge weights.
+        Returns the property dictionary of edge weights.
 
-        Parameters:
-            Nothing
+        Returns
+        -------
+        edge_info : dictionary
+            Weight dictionary for all edges in the shape. The edges as keys and their weights as
+            the values
+        
+        Example
+        -------
+        >>> A = Shape()
+        >>> for i in range(5):
+        >>>     A.add_edge(i, i + 1, (i + 1)*10)
+        >>> A.get_edge_weights()
+        {(0, 1): 10, (1, 2): 20, (2, 3): 30, (3, 4): 40, (4, 5): 50}
 
-        Returns:
-            - edge_info: Weight dictionary for all edges in the shape.
+        Notes
+        -----
+        This method returns a very usable collection of all edges in the shape with their
+        associated weight.
         """
         return self._get_edge_info("weight")
     
     def get_edge_colours(self):
         """
-        Gets the property dictionary of edge colours.
+        Returns the property dictionary of edge colours.
 
-        Parameters:
-            Nothing
+        Returns
+        -------
+        edge_info : dictionary
+            Colour dictionary for all edges in the shape. The edges as keys and their colours as
+            the values.
+        
+        Example
+        -------
+        >>> A = Shape()
+        >>> for i in range(5):
+        >>>     A.add_edge(i, i + 1, colour = colours[i])
+        >>> A.get_vertex_colours()
+        {(0, 1): "black", (1, 2): "red", (2, 3): "green", (3, 4): "blue", (4, 5): "yellow"}
 
-        Returns:
-            - edge_info: Colour dictionary for all edges in the shape.
+        Notes
+        -----
+        This method returns a very usable collection of all edges in the shape with their
+        associated colour.
         """
         return self._get_edge_info("colour")
 
     def get_edge_vectors(self):
         """
-        Gets the vectors of the edges in the shape.
-
-        Error Handling: Raises a type error if any edges concern vertices with no position.
-
-        Parameters:
-            Nothing
+        Returns the vectors of the edges in the shape in the form of a dictionary.
         
-        Returns:
-            - edge_vectors: Dictionary with edges as keys and their vectors as vallues.
+        Returns
+        -------
+        edge_vectors : dictionary
+            Dictionary with edges as keys and their vectors as values.
+
+        Example
+        -------
+        >>> A = Shape()
+        >>> for i in range(3):
+        >>>     A.add_vertex(i, (i, i + (-1)**i)
+        >>> A.add_edge(0, 1)
+        >>> A.add_edge(1, 2)
+        >>> A.add_edge(0, 2)
+        >>> print(A.get_edge_vectors())
+        {(0, 1): (1, -1), (1, 2): (1, 3), (0, 2): (2, 2)}
+        
+        Notes
+        -----
+        Edge vectors are the vectors from the first vertex in the edge to the second as the
+        vertex pairs are stored. If needed, the vector in the opposite direction is simply the
+        same vector with neagtive x, and y, values.
+       
+        This method calculates and returns the true edge vectors for all edge present within the
+        shape. Calculation of these vectors from the property dictionaries is the prefered
+        method to retrieve this information as vectors used for generation in child classes can
+        be overwritten in some circumstances (i.e generate polygon automatically closes the shape
+        if input vectors do not do so).
         """
         edge_vectors = {}
         for edge in self.edges:
             pos_one = self.get_vertex_positions()[edge[0]]
             pos_two = self.get_vertex_positions()[edge[1]]
+            # Raises error upon any vertex with no position
             if pos_one == None or pos_two == None:
                 raise TypeError("Edge vectors cannot be generated as one or more vertices in an edge do not have a position.")
             vector = (pos_two[0] - pos_one[0], pos_two[1] - pos_one[1])
             edge_vectors[edge] = vector
         return edge_vectors
+    
+    def get_edge_vector(self, edge):
+        """
+        Returns specific edge vector for a desired edge.
+
+        Returns
+        -------
+        vector : 2-tuple
+            Vector from the first vertex in the edge to the second.
+
+        See Also
+        --------
+        get_edge_vectors
+        
+        Example
+        -------
+        >>> A = lg.Shape()
+        >>> for i in range(3):
+        >>>     A.add_vertex(i, (i, i + (-1)**i))
+        >>> A.add_edge(0, 1)
+        >>> A.add_edge(1, 2)
+        >>> A.add_edge(0, 2)
+        >>> print(A.get_edge_vector((2, 1)))    # Note reversed vertices still works.
+        (1, 3)
+
+        """
+        # Checks both directions for vertex pair
+        for e in [edge, (edge[1], edge[0])]:
+            if e in self.edges:
+                return self.get_edge_vectors()[e]
+        raise ValueError("This edge does not exist")
+
+    def generate_shape(self, vertex_pos, shape_name, vectors):
+        """
+        Less restrictive version of generate polygon. not closed 
+        Cannot!!
+        """
+        edge_list = []
+        for k in range(len(vectors) + 1):
+            vertex_dict = self.get_vertex_positions()
+            found = False
+            # Check if a vertex in close prox to vector start and replace
+            edge_length = round(sqrt((vectors[k][0])**2 + (vectors[k][1])**2), 3)
+            for key in vertex_dict.keys():
+                if (vertex_pos[0] - vertex_dict[key][0])**2 + (vertex_pos[1] - vertex_dict[key][1])**2 <= (edge_length/100)**2: ## Change to edge_length!!
+                    edge_list.append(key)
+                    found = True
+                    break
+            # Else create new vertex in that spot
+            if found == False:
+                self.add_vertex(str(shape_name) + "-" + str(k), vertex_pos)
+                edge_list.append(str(shape_name) + "-" + str(k))
+            if k == len(vectors) - 1:
+                break
+            vertex_pos = add_vectors(vertex_pos, vectors[k])
+        # This does not account for the fact that the final vertex may exist already!!!!!!!
+        self.add_vertex(str(shape_name) + "-" + str(len(vectors)), vertex_pos)
+        for e in range(len(vectors) - 1):
+            self.add_edge(edge_list[e], edge_list[e + 1])
+        self.add_edge(edge_list[-1], str(shape_name) + "-" + str(len(vectors)))
+        
     
     ## TEMP ##
     def draw_shape(self):
@@ -437,60 +747,91 @@ class Shape():
 ### POLYGON CLASS ###
 class Polygon(Shape):
     """
-    A polygon is a closed shape. The polygon class therefore implements methods that adhere to this definition
-    as well as establishes the potential ability for a lattice to be generated from it.
+    Polygon class to encapsulate the closed definition of polygons.
 
-    Similar to its superclass, a polygon object can be built piece-meal through addition of vertices and
-    edges however this does not ensure the required closed nature of a polygon. Instead, using 'generate
-    polygon', the shape can be generated from a dictionary of vectors that describe the edges of the shape.
+    Example
+    -------
+    >>>
+
+    Notes
+    -----
+    A polygon is defined as a 2-dimensional closed shape with straight sides. The polygon class
+    therefore implements methods that adhere to this definition as well as establishes the potential
+    ability for a lattice to be generated from the polygon.
+
+    Similar to its superclass, a polygon object can be built piece-meal through addition of vertices
+    and edges however this does not ensure the required closed nature of a polygon. Instead, by 
+    using 'generate polygon', the shape can be generated from a dictionary of vectors that describe
+    the edges of the shape.
     
-    Polygons can also potentially be organised into a regular repeated arrangement called a lattice. If this
-    is possible for the polygon a series of change vectors (the vectors between iterations of the shapes in the
-    lattice) can then be defined and the lattice can be generated. 
+    Polygons can also potentially be organised into a regular repeated arrangement called a lattice.
+    If this is possible for the polygon a series of change vectors (the vectors between iterations
+    of the shapes in the lattice) can then be defined and the lattice can be generated. 
 
     """
     def __init__(self):
         """
-        When initialised a polygon is essentially the same as a shape object with the added lattice potential
-        check.
-        
-        '.can_lattice' is a boolean value regarding the ability to generate a lattice from the polygon object.
+        Initialises a Polygon object with vertices and edges as well as its lattice ability status.
+                
+        Attributes
+        ----------
+        .can_lattice : is a boolean value regarding the ability to generate a lattice from the polygon object.
             This attribute runs the the private method '._can_lattice_state'. This check is an abstract method
-            that defers to child classes for specific definition. 
+            that defers to child classes for specific definition.
+
+        Notes
+        -----
+        The .can_lattice attribute is established here to be inherited by all future child classes
+        however the check method itself is to be implemented in these. This is for potential
+        future check method on all polygons on their ability to be tesselated.
         """
         super().__init__()
         self.can_lattice = self._get_lattice_state()
     
     def generate_polygon(self, vertex_pos, shape_name, vectors):
         """
-        Generates a named polygon starting from a given point with a dictionary of edge defining vectors.
+        Generates a named polygon from a series of edge vectors staring at a given point.
         
-        Parameters:
-            - vertex_pos:
-                type: (x, y) - Cartesian Coordinate (2-tuple with x, y values: int or float),
-                description: This dictionary should be in the form of 'vertex_name: vector'. It should also be
-                    noted that if the last edge vector in the dictionary does not "close" the shape itself this
-                    last vector will be replaced with an edge to the initial starting vertex.
-            - shape_name:
-                type: Any (preferred type: string or int),
-                description: This is the overiding shape name dictating all the vertex names within the shape.
-        
-        Returns:
-            Nothing
+        Parameters
+        ----------
+        vertex_pos : (x, y) - 2D Cartesian Coordinate
+            Start position for the initial vertex in the polygon.
+        shape_name : string, int, or float
+            This is the overiding shape name dictating all the vertex names within the shape.
+            Vertex names are of the form; 'shape_name-k', where k is number of the vertex.
+        vectors : list
+            This should be an ordered list of edge vectors. This method runs through the list in
+            order to generate the polygon. It should be noted that if the last edge vector in the
+            list does not "close" the shape itself this last vector will be replaced with an edge
+            connecting the last vertex to the starting vertex.
+
+        Notes
+        -----
+        TO DO... overwriting edges and no two vertices in the same position.
+        - WILL NOT DRAW A VERTEX IF THERE EXISTS A VERTEX IN A CLOSE ENOUGH PROXIMITY TO THE 
+            DESTINATION!
+        - Draws the in
         """
         edge_list = []
-        for k in range(len(vectors)):
+        for k in range(len(vectors) + 1):
             vertex_dict = self.get_vertex_positions()
             found = False
+            # Check if a vertex in close prox to vector start and replace
+            edge_length = round(sqrt((vectors[k][0])**2 + (vectors[k][1])**2), 3)
             for key in vertex_dict.keys():
-                edge_length = round(sqrt(abs((vertex_dict[key][0])**2 + (vertex_dict[key][1])**2)), 3)
                 if (vertex_pos[0] - vertex_dict[key][0])**2 + (vertex_pos[1] - vertex_dict[key][1])**2 <= (edge_length/100)**2: ## Change to edge_length!!
                     edge_list.append(key)
                     found = True
+                    break
+            # Else create new vertex in that spot
             if found == False:
                 self.add_vertex(str(shape_name) + "-" + str(k), vertex_pos)
                 edge_list.append(str(shape_name) + "-" + str(k))
+            # Move along next vector
+            if k == len(vectors) - 1:
+                break
             vertex_pos = add_vectors(vertex_pos, vectors[k])
+        # Connect up the vertexes (this closes the loop no matter what)
         for e in range(len(vectors) - 1):
             self.add_edge(edge_list[e], edge_list[e + 1])
         self.add_edge(edge_list[len(vectors) - 1], edge_list[0])
@@ -641,10 +982,10 @@ class RegularPolygon(Polygon):
         Returns:
             - vectors: indexed dictionary with edge vectors as values.
         """
-        vectors = {}
+        vectors = []
         for i in range(self.sides):
             angle = i*self.theta + (180 - (self.int_angle/2)) + self.rotation
-            vectors[i] = change_to_cart_vector((self.edge_length, angle))
+            vectors.append(change_to_cart_vector((self.edge_length, angle)))
         return vectors
     
     def _get_lattice_state(self):
@@ -782,23 +1123,24 @@ class Square(RegularPolygon):
     Squares are 4 sided polygons with internal angles of 90 degrees. The default square is positioned with
     its edges at 45 degree angles to the x-axis, centred at the origin.
     """
-    def __init__(self, edge_length = 1, centre = (0, 0), rotation = 0):
+    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
         Squares are initialised as Regular Polygons with 4 sides.
 
         Parameters:
             - edge_length:
                 default: 1,
-                type: (int or float) > 0,
+                type: float > 0,
                 description: The deired edge length for the triangles.
             - centre:
                 default: Origin (0, 0),
-                type: (x, y) - Cartesian Coordinate (2-tuple with x, y values: int or float),
+                type: (x, y) - Cartesian Coordinate (2-tuple with x, y values: float),
                 description: Centre position for the triangle.
             - rotation:
                 default: 0,
-                type: Angle in the cyclic range (-360, 360),
-                description: The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
+                type: float, 
+                description: Angle in the cyclic range (-360, 360). The angle, in degrees, to rotate the triangle
+                    arounds its centre anti-clockwise.
         
         Returns:
             Nothing
