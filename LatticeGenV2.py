@@ -2,7 +2,8 @@ import abc
 import cv2 as cv
 import numpy as np
 from math import sqrt, sin, cos, radians
-from functions import add_vectors, change_to_cart_dict, change_to_cart_vector, check_if_coord, my_filled_circle, my_line
+from exception import *
+from functions import add_vectors, change_to_cart_dict, change_to_cart_vector, check_if_coord, my_filled_circle, my_line, is_positive_int, is_supported_colour
 
 ## Potential Library Name: 'polylat', or 'polylatlib'
 
@@ -17,14 +18,14 @@ class Shape():
     
     Example
     -------
-    >>> PUT EXAMPLE HERE!!!!!!
+    >>> ADD EXAMPLE
 
     Notes
     -----
     The shape class includes all the methods related specifically to vertices and edges. Through
     these methods the shape can be built piece-meal with the addition of vertices and edges to the
-    shape object, as well as be used to update vertex information (using the '.update_' methods),
-    or retrieve a vertex's, or edge's, specific property dictionary (using the '.get_' methods).
+    shape object, as well as be used to update vertex information (using the '.update' methods),
+    or retrieve a vertex's, or edge's, specific property dictionary (using the '.get' methods).
 
     The final method of the shape object (currently) utilises the OpenCV library to create and
     canvas and draw the created shape.
@@ -67,12 +68,12 @@ class Shape():
     
     def __str__(self):
         """
-        Returns a logical summary of the shape.
+        Returns the type and a summary of the shape.
 
         Returns
         -------
         info : string
-            Basic information opf the shape object. Indicates the shape type, number of verticies,
+            Basic information of the shape object. Indicates the shape type, number of verticies,
             and number of sides.
 
         Example
@@ -84,8 +85,18 @@ class Shape():
         Shape:
         - Num. of Vertices: 6,
         - Num. of Edges: 5
+
+        Notes
+        -----
+        ADD NOTES
         """
-        return type(self).__name__ + f":\n- Num. of Vertices: {len(self.vertices)},\n- Num. of Edges: {len(self.edges)}.".format(self=self)
+        return (
+            f"""
+            Type : {type(self).__name__}
+            Number of Vertices : {len(self.vertices)}
+            Number of Edges : {len(self.edges)}
+            """
+        )
 
     def __len__(self):
         """
@@ -110,11 +121,25 @@ class Shape():
         """
         Returns True if a vertex or edge exists in the shape, False otherwise.
 
+        Parameters
+        ----------
+        a : vertex or edge,
+            A vertex or edge element that may be contained in the shape.
+
+        Returns
+        -------
+        boolean :
+            True if 'a' is in the shape, False if not.
+
         Example
         -------
         >>> A = EquilateralTriangle()
         >>> ("0-0", "0-1") in A
         True
+
+        Notes
+        -----
+        ADD NOTES
         """
         # First Checks if input could be an edge
         if type(a) == tuple and len(a) == 2:
@@ -178,22 +203,65 @@ class Shape():
         # Checks vertex does not already exist
         if vertex_for_adding not in self.vertices:
             # Checks position of vertex is Cartesian coord. or None
-            if check_if_coord(position) or position == None:
-                self.vertices.append(vertex_for_adding)
-                info = {
-                    "position": position,
-                    "size": size,
-                    "colour": colour
-                }
-                self.vertices_info.append((vertex_for_adding, info))
-            else:
-                raise ValueError("Input 'position' must be in the form of a cartesian coordinate")
+            if not check_if_coord(position) and position != None:
+                raise PolyLatNotCart(position)
+            elif not is_positive_int(size):
+                raise PolyLatNotPosInt(size)
+            elif not is_supported_colour(colour):
+                raise PolyLatNotColour(colour)
+            
+            info = {
+                "position": position,
+                "size": size,
+                "colour": colour
+            }
+            self.vertices.append(vertex_for_adding)
+            self.vertices_info.append((vertex_for_adding, info))
         else:
-            raise ValueError("This vertex already exists.")
+            ### change this to update system????
+            raise PolyLatError(f"Vertex '{vertex_for_adding}' already exists.")
 
-    def _update_vertex_property(self, vertex_for_update, prop, value):
+    def update(self, item_for_update, prop, value):
         """
-        Private method for updating any of the vertex properties.
+        Updates the desired property for a given item, either a vertex or an edge.
+
+        See Also
+        --------
+        update_vertex, update_vertex_position, update_vertex_size, update_vertex_colour,
+        update_edge, update_edge_weight, update_edge_colour
+
+        Parameters
+        ----------
+        item_for_update : vertex or edge
+            A vertex or edge to have the desired property updated.
+        prop : vertex or edge property
+            Vertex property's are "position", "size", or "colour". Edge property's are "weight", or
+            "colour".
+        value : property dependent
+            The new value to be inserted into the desired property for the given vertex.
+        
+        Examples
+        --------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
+        """
+        if item_for_update in self:
+            # Check if item is edge
+            if type(item_for_update) == tuple:
+                self.update_edge(item_for_update, prop, value)
+            # Else the item is a vertex
+            else:
+                self.update_vertex(item_for_update, prop, value)
+        else:
+            raise PolyLatNotExist(item_for_update)
+
+
+    def update_vertex(self, vertex_for_update, prop, value):
+        """
+        Updates the desired property for a given vertex.
 
         Parameters
         ----------
@@ -203,113 +271,114 @@ class Shape():
             The desired vertex property for update.
         value : property dependent value
             New value to be inserted into vertex information dictionary for desired attribute.
+
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
         # Checks vertex existence
-        try:
-            index = self.vertices.index(vertex_for_update)
-            self.vertices_info[index][1][prop] = value
-        except:
-            raise ValueError("The vertex entered does not exist.")
+        if vertex_for_update in self.vertices:
+            # Method selector
+            try:
+                method_name = "update_vertex_" + prop
+                method = getattr(self, method_name)
+                method(vertex_for_update, value)
+            except AttributeError:
+                raise PolyLatNotProp(prop)
+        else:
+            raise PolyLatNotExist(vertex_for_update)
     
     def update_vertex_position(self, vertex_for_update, value):
         """
-        Updates the vertex position.
+        Updates the position for a given vertex.
 
         Parameters
         ----------
         vertex_for_update : vertex
             A prexisting vertex in the shape to be updated.
         value : (x, y) - 2D Cartesian Coordinate
-            New position to be inserted into vertex's information dictionary.
-        
+            New value to be inserted into vertex information dictionary for position.
+
         Example
         -------
-        >>> A = Shape()
-        >>> A.add_vertex("xmpl", (2, 3))
-        >>> print(A.vertices_info)
-        [("xmpl", {position: (2, 3), size: 1, colour: "black"})]
-        >>> A.update_vertex_position("xmpl", (0, 0))    # move "xmpl" to the origin.
-        >>> print(A.vertices_info)
-        [("xmpl", {position: (0, 0), size: 1, colour: "black"})]
+        >>> ADD EXAMPLE
 
         Notes
         -----
-        This method takes a prexisting vertex within the shape and proceeds to update its position
-        property in the vertex's infomation dictionary.
+        ADD NOTES
         """
-        # Checks if value input is a cartesian coordinate
-        if check_if_coord(value):
-            self._update_vertex_property(vertex_for_update, "position", value)
+        if vertex_for_update in self.vertices:
+            if check_if_coord(value):
+                index = self.vertices.index(vertex_for_update)
+                self.vertices_info[index][1]["position"] = value
+            else:
+                raise PolyLatNotCart(value)
         else:
-            raise ValueError(value, " - position should be a cartesian coordinate.")
+            raise PolyLatNotExist(vertex_for_update)
     
     def update_vertex_size(self, vertex_for_update, value):
         """
-        Updates the vertex size.
+        Updates the size for a given vertex.
 
         Parameters
         ----------
         vertex_for_update : vertex
             A prexisting vertex in the shape to be updated.
         value : int > 0
-            New size to be inserted into vertex's information dictionary.
+            New value to be inserted into vertex information dictionary for size.
 
         Example
         -------
-        >>> A = Shape()
-        >>> A.add_vertex("xmpl", (2, 3))
-        >>> print(A.vertices_info)
-        [("xmpl", {position: (2, 3), size: 1, colour: "black"})]
-        >>> A.update_vertex_size("xmpl", 100)    # scale "xmpl" to size 100.
-        >>> print(A.vertices_info)
-        [("xmpl", {position: (2, 3), size: 100, colour: "black"})]
-        
+        >>> ADD EXAMPLE
+
         Notes
         -----
-        This method takes a prexisting vertex within the shape and proceeds to update its size
-        property in the vertex's infomation dictionary.
+        ADD NOTES
         """
-        # Checks if size value is a positive integer
-        if type(value) == int and value > 0:
-            self._update_vertex_property(vertex_for_update, "size", value)
+        if vertex_for_update in self.vertices:
+            if is_positive_int(value):
+                index = self.vertices.index(vertex_for_update)
+                self.vertices_info[index][1]["size"] = value
+            else:
+                raise PolyLatNotPosInt(value)
         else:
-            raise ValueError(value, " - size should be an integer.")
-
+            raise PolyLatNotExist(vertex_for_update)
+    
     def update_vertex_colour(self, vertex_for_update, value):
         """
-        Updates the vertex colour.
+        Updates the colour for a given vertex.
 
         Parameters
         ----------
         vertex_for_update : vertex
             A prexisting vertex in the shape to be updated.
         value : colour
-            New colour to be inserted into vertex's information dictionary.
+            New value to be inserted into vertex information dictionary for colour.
 
         Example
         -------
-        >>> A = Shape()
-        >>> A.add_vertex("xmpl", (2, 3))
-        >>> print(A.vertices_info)
-        [("xmpl", {position: (2, 3), size: 1, colour: "black"})]
-        >>> A.update_vertex_colour("xmpl", "green")    # change "xmpl" from black to green.
-        >>> print(A.vertices_info)
-        [("xmpl", {position: (2, 3), size: 1, colour: "green"})]
-        
+        >>> ADD EXAMPLE
+
         Notes
         -----
-        This method takes a prexisting vertex within the shape and proceeds to update its colour
-        property in the vertex's infomation dictionary.
+        ADD NOTES
         """
-        # Checks if value is a supported colour
-        if value in colours:
-            self._update_vertex_property(vertex_for_update, "colour", value)
+        if vertex_for_update in self.vertices:
+            if is_supported_colour(value):
+                index = self.vertices.index(vertex_for_update)
+                self.vertices_info[index][1]["colour"] = value
+            else:
+                raise PolyLatNotColour(value)
         else:
-            raise ValueError(value, " - not a supported colour.")
-
-    def _get_vertex_info(self, desired_info):
+            raise PolyLatNotExist(vertex_for_update)
+    
+    def get_vertex_info(self, desired_info):
         """
-        Private method to get a specific property dictionary for all vertices.
+        Returns a specific property dictionary for all vertices.
 
         Parameters
         ----------
@@ -321,11 +390,22 @@ class Shape():
         vertex_info : dictionary
             Property dictionary with vertices as keys, and the desired property ('deired_info')
             as values.
+        
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
-        vertex_info = {}
-        for vertex in self.vertices_info:
-            vertex_info[vertex[0]] = vertex[1][desired_info]
-        return vertex_info
+        try:
+            vertex_info = {}
+            for vertex in self.vertices_info:
+                vertex_info[vertex[0]] = vertex[1][desired_info]
+            return vertex_info
+        except:
+            raise PolyLatNotExist(desired_info)
 
     def get_vertex_positions(self):
         """
@@ -350,7 +430,7 @@ class Shape():
         This method returns a very usable collection of all vertices in the shape with their
         associated position.
         """
-        return self._get_vertex_info("position")
+        return self.get_vertex_info("position")
 
     def get_vertex_sizes(self):
         """
@@ -375,7 +455,7 @@ class Shape():
         This method returns a very usable collection of all vertices in the shape with their
         associated size.
         """
-        return self._get_vertex_info("size")
+        return self.get_vertex_info("size")
     
     def get_vertex_colours(self):
         """
@@ -400,7 +480,7 @@ class Shape():
         This method returns a very usable collection of all vertices in the shape with their
         associated colour.
         """
-        return self._get_vertex_info("colour")
+        return self.get_vertex_info("colour")
 
     def add_edge(self, vertex_one, vertex_two, weight = 1, colour = "black"):
         """
@@ -424,8 +504,7 @@ class Shape():
         >>> A = Shape()
         >>> A.add_edge(1, 2) # Adding edge between to new vetrices, 1, and 2.
         >>> A.add_edge("Hello", "World", 3) # An edge between 'Hello' and 'World' with weight 3.
-        >>> A.add_edge("Hello", "xmpl", colour = "red") # Establishing edge between exsiting
-                                                        vertex "Hello" and new vertex "xmpl".
+        >>> A.add_edge("Hello", "xmpl", colour = "red") # Establishing edge between exsiting vertex "Hello" and new vertex "xmpl".
         >>> print(A.edges)
         [(1, 2), ("Hello", "World"), ("Hello", "xmpl")]
 
@@ -441,7 +520,7 @@ class Shape():
         position and default size and colour.
         """
         # Checks if edge (in either direction) pre-exists
-        if (vertex_one, vertex_two) not in self.edges and (vertex_two, vertex_one) not in self.edges:
+        if (vertex_one, vertex_two) not in self:
             self.edges.append((vertex_one, vertex_two))
             info = {
                 "weight": weight,
@@ -452,14 +531,12 @@ class Shape():
             for vertex in (vertex_one, vertex_two):
                 if vertex not in self.vertices:
                     self.add_vertex(vertex)
-        # Currently passed as usage in "generate_polygon" causes error raised to be thrown.
-        # POTENTIAL FIX: make it not throw error in 'add' methods if pre-exist...?
         else:
-            pass
+            raise PolyLatError(f"Edge '{(vertex_one, vertex_two)}' already exists in the shape.")
     
-    def _update_edge_property(self, edge_for_update, prop, value):
+    def update_edge(self, edge_for_update, prop, value):
         """
-        Private method for updating any of the edge properties.
+        Updates a desired property for a specific edge.
 
         Parameters
         ----------
@@ -469,79 +546,90 @@ class Shape():
             The desired edge property for update.
         value: propery dependent value
             New value to be inserted into edge information dictionary for desired attribute.
+
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
-        # Checks existence of edge as input by user
-        if edge_for_update in self.edges:
-            index = self.edges.index(edge_for_update)
-            self.edges_info[index][2][prop] = value
-        else:
-            # Checks existence of oppossite direcvtion edge.
+        # Checks existence of edge in shape
+        if edge_for_update in self:
+            # Method selector
             try:
-                index = self.edges.index((edge_for_update[1], edge_for_update[0]))
-                self.edges_info[index][2][prop] = value
-            except:
-                raise ValueError("The edge entered does not exist.")
+                method_name = "update_edge_" + prop
+                method = getattr(self, method_name)
+                method(edge_for_update, value)
+            except AttributeError:
+                raise PolyLatNotProp(prop)
+        else:
+            raise PolyLatError(f"'{edge_for_update}' does not exist.")
 
     def update_edge_weight(self, edge_for_update, value):
         """
-        Updates the edge weight.
+        Updates the weight for a specific edge.
 
         Parameters
         ----------
         edge_for_update : 2-tuple, vertex pair
             A prexisting edge in the shape to be updated.
-        value : int > 0
-            New weight to be inserted into edges's information dictionary.
-        
+        value: int > 0
+            New value to be inserted into edge information dictionary for weight.
+
         Example
         -------
-        >>> A = Shape()
-        >>> A.add_edge("xmpl", 2)
-        >>> print(A.edges_info)
-        [(("xmpl", 2), {weight: 1, colour: "black"})]
-        >>> A.update_edge_weight(("xmpl", 2), 20)    # change edge's weight to 20.
-        >>> print(A.edges_info)
-        [(("xmpl", 2), {weight: 20, colour: "black"})]
-        
+        >>> ADD EXAMPLE
+
         Notes
         -----
-        This method takes a prexisting edge within the shape and proceeds to update its weight
-        property in the edge's infomation dictionary.
-
+        ADD NOTES
         """
-        self._update_edge_property(edge_for_update, "weight", value)
-
+        if is_positive_int(value):
+            if edge_for_update in self.edges:
+                index = self.edges.index(edge_for_update)
+            elif (edge_for_update[1], edge_for_update[0]) in self.edges:
+                index = self.edges.index((edge_for_update[1], edge_for_update[0]))
+            else:
+                raise PolyLatNotExist(edge_for_update)
+            self.edges_info[index][2]["weight"] = value
+        else:
+            raise PolyLatNotPosInt(value)
+    
     def update_edge_colour(self, edge_for_update, value):
         """
-        Updates the edge colour.
+        Updates the colour for a specific edge.
 
         Parameters
         ----------
         edge_for_update : 2-tuple, vertex pair
             A prexisting edge in the shape to be updated.
-        value : colour
-            New colour to be inserted into edges's information dictionary.
-        
+        value: colour
+            New value to be inserted into edge information dictionary for colour.
+
         Example
         -------
-        >>> A = Shape()
-        >>> A.add_edge("xmpl", 2)
-        >>> print(A.edges_info)
-        [(("xmpl", 2), {weight: 1, colour: "black"})]
-        >>> A.update_edge_colour(("xmpl", 2), "yellow")    # change edge's colour to yellow.
-        >>> print(A.edges_info)
-        [(("xmpl", 2), {weight: 2, colour: "yellow"})]
-        
+        >>> ADD EXAMPLE
+
         Notes
         -----
-        This method takes a prexisting edge within the shape and proceeds to update its colour
-        property in the edge's infomation dictionary.
+        ADD NOTES
         """
-        self._update_edge_property(edge_for_update, "colour", value)
-    
-    def _get_edge_info(self, desired_info):
+        if is_supported_colour(value):
+            if edge_for_update in self.edges:
+                index = self.edges.index(edge_for_update)
+            elif (edge_for_update[1], edge_for_update[0]) in self.edges:
+                index = self.edges.index((edge_for_update[1], edge_for_update[0]))
+            else:
+                raise PolyLatNotExist(edge_for_update)
+            self.edges_info[index][2]["colour"] = value
+        else:
+            raise PolyLatNotColour(value)
+
+    def get_edge_info(self, desired_info):
         """
-        Private method to get a specific property dictionary for all edges in the shape.
+        Returns a specific property dictionary for all edges in the shape.
 
         Parameters
         ----------
@@ -553,11 +641,23 @@ class Shape():
         edge_info : dictionary
             Property dictionary with edges as keys, and the desired property ('desired_info') as
             values.
+
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
+
         """
-        edge_info = {}
-        for edge in self.edges_info:
-            edge_info[(edge[0], edge[1])] = edge[2][desired_info]
-        return edge_info
+        try:
+            edge_info = {}
+            for edge in self.edges_info:
+                edge_info[(edge[0], edge[1])] = edge[2][desired_info]
+            return edge_info
+        except:
+            raise PolyLatError(f"'{desired_info}' is not an edge property.")
 
     def get_edge_weights(self):
         """
@@ -582,7 +682,7 @@ class Shape():
         This method returns a very usable collection of all edges in the shape with their
         associated weight.
         """
-        return self._get_edge_info("weight")
+        return self.get_edge_info("weight")
     
     def get_edge_colours(self):
         """
@@ -607,7 +707,7 @@ class Shape():
         This method returns a very usable collection of all edges in the shape with their
         associated colour.
         """
-        return self._get_edge_info("colour")
+        return self.get_edge_info("colour")
 
     def get_edge_vectors(self):
         """
@@ -676,26 +776,48 @@ class Shape():
         >>> print(A.get_edge_vector((2, 1)))    # Note reversed vertices still works.
         (1, 3)
 
+        Notes
+        -----
+        ADD NOTES
         """
-        # Checks both directions for vertex pair
         for e in [edge, (edge[1], edge[0])]:
             if e in self.edges:
                 return self.get_edge_vectors()[e]
-        raise ValueError("This edge does not exist")
+        raise PolyLatNotExist(edge)
+
 
     def generate_shape(self, vertex_pos, shape_name, vectors):
         """
-        Less restrictive version of generate polygon. not closed 
-        Cannot!!
+        Generates a named shape from a series of edge vectors staring at a given point.
+        
+        Parameters
+        ----------
+        vertex_pos : (x, y) - 2D Cartesian Coordinate
+            Start position for the initial vertex in the polygon.
+        shape_name : string, int, or float
+            This is the overiding shape name dictating all the vertex names within the shape.
+            Vertex names are of the form; 'shape_name-k', where k is number of the vertex.
+        vectors : list
+            This should be an ordered list of edge vectors. This method runs through the list in
+            order to generate the polygon.
+
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        This method checks for pre-existence of vertices before adding new ones, i.e we cannot
+        have multiple vetrices occupying the same position...
         """
         edge_list = []
         for k in range(len(vectors) + 1):
             vertex_dict = self.get_vertex_positions()
             found = False
-            # Check if a vertex in close prox to vector start and replace
-            edge_length = round(sqrt((vectors[k][0])**2 + (vectors[k][1])**2), 3)
+            # Check if a vertex in within a small radius (1/100) to vector start,
+            # If found choose existing vertex instead - this accounts for floating point error
             for key in vertex_dict.keys():
-                if (vertex_pos[0] - vertex_dict[key][0])**2 + (vertex_pos[1] - vertex_dict[key][1])**2 <= (edge_length/100)**2: ## Change to edge_length!!
+                if (vertex_pos[0] - vertex_dict[key][0])**2 + (vertex_pos[1] - vertex_dict[key][1])**2 <= (1/100)**2: ## Change to edge_length!!
                     edge_list.append(key)
                     found = True
                     break
@@ -703,14 +825,12 @@ class Shape():
             if found == False:
                 self.add_vertex(str(shape_name) + "-" + str(k), vertex_pos)
                 edge_list.append(str(shape_name) + "-" + str(k))
-            if k == len(vectors) - 1:
-                break
-            vertex_pos = add_vectors(vertex_pos, vectors[k])
-        # This does not account for the fact that the final vertex may exist already!!!!!!!
-        self.add_vertex(str(shape_name) + "-" + str(len(vectors)), vertex_pos)
-        for e in range(len(vectors) - 1):
-            self.add_edge(edge_list[e], edge_list[e + 1])
-        self.add_edge(edge_list[-1], str(shape_name) + "-" + str(len(vectors)))
+            # Move along next vector if not at end of vector list
+            if k != len(vectors):
+                vertex_pos = add_vectors(vertex_pos, vectors[k])
+        for e in range(len(vectors)):
+            if (edge_list[e], edge_list[e + 1]) not in self:
+                self.add_edge(edge_list[e], edge_list[e + 1])
         
     
     ## TEMP ##
@@ -751,7 +871,7 @@ class Polygon(Shape):
 
     Example
     -------
-    >>>
+    >>> ADD EXAMPLE
 
     Notes
     -----
@@ -772,12 +892,10 @@ class Polygon(Shape):
     def __init__(self):
         """
         Initialises a Polygon object with vertices and edges as well as its lattice ability status.
-                
-        Attributes
-        ----------
-        .can_lattice : is a boolean value regarding the ability to generate a lattice from the polygon object.
-            This attribute runs the the private method '._can_lattice_state'. This check is an abstract method
-            that defers to child classes for specific definition.
+        
+        Example
+        -------
+        ADD EXAMPLE
 
         Notes
         -----
@@ -786,123 +904,81 @@ class Polygon(Shape):
         future check method on all polygons on their ability to be tesselated.
         """
         super().__init__()
-        self.can_lattice = self._get_lattice_state()
-    
-    def generate_polygon(self, vertex_pos, shape_name, vectors):
-        """
-        Generates a named polygon from a series of edge vectors staring at a given point.
-        
-        Parameters
-        ----------
-        vertex_pos : (x, y) - 2D Cartesian Coordinate
-            Start position for the initial vertex in the polygon.
-        shape_name : string, int, or float
-            This is the overiding shape name dictating all the vertex names within the shape.
-            Vertex names are of the form; 'shape_name-k', where k is number of the vertex.
-        vectors : list
-            This should be an ordered list of edge vectors. This method runs through the list in
-            order to generate the polygon. It should be noted that if the last edge vector in the
-            list does not "close" the shape itself this last vector will be replaced with an edge
-            connecting the last vertex to the starting vertex.
-
-        Notes
-        -----
-        TO DO... overwriting edges and no two vertices in the same position.
-        - WILL NOT DRAW A VERTEX IF THERE EXISTS A VERTEX IN A CLOSE ENOUGH PROXIMITY TO THE 
-            DESTINATION!
-        - Draws the in
-        """
-        edge_list = []
-        for k in range(len(vectors) + 1):
-            vertex_dict = self.get_vertex_positions()
-            found = False
-            # Check if a vertex in close prox to vector start and replace
-            edge_length = round(sqrt((vectors[k][0])**2 + (vectors[k][1])**2), 3)
-            for key in vertex_dict.keys():
-                if (vertex_pos[0] - vertex_dict[key][0])**2 + (vertex_pos[1] - vertex_dict[key][1])**2 <= (edge_length/100)**2: ## Change to edge_length!!
-                    edge_list.append(key)
-                    found = True
-                    break
-            # Else create new vertex in that spot
-            if found == False:
-                self.add_vertex(str(shape_name) + "-" + str(k), vertex_pos)
-                edge_list.append(str(shape_name) + "-" + str(k))
-            # Move along next vector
-            if k == len(vectors) - 1:
-                break
-            vertex_pos = add_vectors(vertex_pos, vectors[k])
-        # Connect up the vertexes (this closes the loop no matter what)
-        for e in range(len(vectors) - 1):
-            self.add_edge(edge_list[e], edge_list[e + 1])
-        self.add_edge(edge_list[len(vectors) - 1], edge_list[0])
 
     def generate_lattice_circular(self, layers):
         """
-        Generates the polygon's lattice in a given number of layers centred on the staring polygon. Uses the
-        abstract methods; '_generate_change_vectors' and '_generate_lattice_circular'.
+        Generates the polygon's lattice in a given number of layers centred on the staring
+        polygon. Uses the methods; 'generate_change_vectors' a 'generate_lattice_from_vectors'.
 
-        Error Handling: Checks '.can_lattice' is True.
-
-        Parameters:
-            - layers:
-                type: int > 0,
-                description: The number of layers to be generated around the original polygon. If 1 is input
-                    the original shape is just generated.
+        Parameters
+        ----------
+        layers : int > 0
+            The number of layers to be generated around the original polygon. If 1 is input
+            the original shape is just generated.
         
-        Returns:
-            - Lattice: specific to shape being generated from.
+        Returns
+        -------
+        lattice : Lattice class object specific to current generating shape.
+
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
-        if self.can_lattice:
-            chg_vectors = self._generate_change_vectors()
-            return self._generate_lattice_circular(layers, chg_vectors)
-            
+        if self.get_lattice_state():
+            chg_vectors = self.generate_change_vectors()
+            return self.generate_lattice_from_vectors(layers, chg_vectors)  
         else:
             print("Lattice not possible with this shape.")
 
     @abc.abstractmethod
-    def _generate_change_vectors(self):
+    def generate_change_vectors(self):
         """
-        Abstract method that generates the change vectors that define the movement between shapes within the
-        lattice. To be defined in child classes.
+        Abstract method that generates and returns the change vectors that define the
+        movement between shapes within the lattice. To be defined in child classes.
+        """
+        return
+
+    # Rework this method to function similar to the generate_shape method !!!
+    @abc.abstractmethod
+    def generate_lattice_from_vectors(self, layer, chg_vectors):
+        """
+        Abstract method that generates and returns the specific lattice for polygons from a set of
+        change vectors. To be defined in child classes.
         """
         return
 
     @abc.abstractmethod
-    def _generate_lattice_circular(self, layer, chg_vectors):
+    def get_lattice_state(self):
         """
-        Abstract method that generates the specific circular lattice for polygons. To be defined in child
-        classes.
+        Abstract method that returns whether or not a polygon can have a lattioce generated from
+        it. To be defined in child classes.
         """
         return
-
-    @abc.abstractmethod
-    def _get_lattice_state(self):
-        """
-        Abstract method that returns whether or not a polygon can have a lattioce generated from it. To be
-        defined in child classes.
-        """
-        return "To be implemented in child class."
 
 
 class RegularPolygon(Polygon):
     """
-    Regular polygons are defined to be polygons with all edges having equal length and all internal angles
-    the same.
+    Regular polygons are defined to be polygons with all edges having equal length and all
+    internal angles the same.
 
-    The polygons of this type can thus be defined simply by their number of sides and edge length. Along with
-    a given centre and a rotation all further features of these shapes can be found through private class 
-    methods.
+    The polygons of this type can thus be defined simply by their number of sides and edge
+    length. Along with a given centre and a rotation all further features of these shapes can
+    be found through private class methods.
     """
     def __init__(self, sides: int, edge_length, centre, rotation):
         """
-        Regular Polygons are defined by their number of sides and edge length. When initialised, Regular
-        Polygon implements both these parameters along with a user defined centre for the shape and an angle of
-        rotation. When called regular polygons are automatically generated with help from some variables
-        detailed below;
+        Regular Polygons are defined by their number of sides and edge length. When
+        initialised, RegularPolygon implements both these parameters along with a user
+        defined centre for the shape and an angle of rotation. When called regular polygons
+        are automatically generated with help from some variables detailed below;
 
         '_set_radius_info()' calculates the radius vector for the shape. To calculate this, other shape
             variables are calculated (shape angles and radius length). This method is called before
-            initialisation of parent class attributes for use in '._get_lattice_state' method.
+            initialisation of parent class attributes for use in '.get_lattice_state' method.
         '.polygon_vectors' sets the edge_vectors, using the private method '._generate_polygon_vectors', for
             the polygon to then be used in parent class method 'generate_polygon'.
 
@@ -939,7 +1015,7 @@ class RegularPolygon(Polygon):
         elif self.edge_length < 0:
             raise ValueError("Argument 'edge_length' = {self.edge_length}. Edges cannot be of negative length.".format(self=self))
         elif not check_if_coord(self.centre):
-            raise ValueError("Argument 'centre' = {self.centre}. Centre must be a cartesian coordinate.".format(self=self))
+            raise PolyLatNotCart(self.centre)
         elif self.rotation < - 360 and self.rotation > 360:
             raise ValueError("Argument 'rotation' = {self.rotation}. Shape rotations should be within range (-360, 360).".format(self=self))
 
@@ -949,7 +1025,7 @@ class RegularPolygon(Polygon):
 
         self.polygon_vectors = self._generate_polygon_vectors(self.sides)
         start_pos = add_vectors(self.centre, self.radius_vec)
-        self.generate_polygon(start_pos, 0, self.polygon_vectors)
+        self.generate_shape(start_pos, 0, self.polygon_vectors)
 
     def _set_radius_info(self):
         """
@@ -988,7 +1064,7 @@ class RegularPolygon(Polygon):
             vectors.append(change_to_cart_vector((self.edge_length, angle)))
         return vectors
     
-    def _get_lattice_state(self):
+    def get_lattice_state(self):
         """
         Private method to check the ability for lattices to be created. For regular polygons this can be
         acheived by seeing if the shape's internal angle divides 360 completly.
@@ -1038,7 +1114,7 @@ class EquilateralTriangle(RegularPolygon):
         """
         super().__init__(3, edge_length, centre, rotation)
 
-    def _generate_change_vectors(self):
+    def generate_change_vectors(self):
         """
         Private method to generate the lattice change vectors. For triangles these are 6 vectors correspoding 
         to the edge_vectors; 2 for each edge, 1 vector for each direction along the edge.
@@ -1055,7 +1131,7 @@ class EquilateralTriangle(RegularPolygon):
         change_vectors = change_to_cart_dict(base_vectors)
         return change_vectors
     
-    def _generate_lattice_circular(self, layers, chg_vectors):
+    def generate_lattice_from_vectors(self, layers, chg_vectors):
         """
         Private method to create the lattice object corresponding to the current regular polygon. With given
         layers and lattice change vectors this method generates and returns a lattice layer by layer around
@@ -1086,7 +1162,7 @@ class EquilateralTriangle(RegularPolygon):
         origin_vertex = add_vectors(self.centre, self.radius_vec)
         for layer in range(layers):
             if layer == 0:
-                lattice.generate_polygon(origin_vertex, shape, cart_one)
+                lattice.generate_shape(origin_vertex, shape, cart_one)
             else:
                 if layer % 2 == 0: # Odd Layers
                     origin_vertex = add_vectors(origin_vertex, chg_vectors[5])
@@ -1095,11 +1171,11 @@ class EquilateralTriangle(RegularPolygon):
                     for i in range(3):
                         for _ in range(int(layer/2)):
                             shape += 1
-                            lattice.generate_polygon(vertex_pos, shape, cart_one)
+                            lattice.generate_shape(vertex_pos, shape, cart_one)
                             vertex_pos = add_vectors(vertex_pos, chg_vectors[2*i])
                         for _ in range(int(layer/2)):
                             shape += 1
-                            lattice.generate_polygon(vertex_pos, shape, cart_one)
+                            lattice.generate_shape(vertex_pos, shape, cart_one)
                             vertex_pos = add_vectors(vertex_pos, chg_vectors[(2*i) + 1])    
                 else: # Even Layers
                     origin_vertex = add_vectors(origin_vertex, chg_vectors[2])
@@ -1107,11 +1183,11 @@ class EquilateralTriangle(RegularPolygon):
                     for i in range(3):
                         for _ in range(int((layer + 1)/2)):
                             shape += 1
-                            lattice.generate_polygon(vertex_pos, shape, cart_two)
+                            lattice.generate_shape(vertex_pos, shape, cart_two)
                             vertex_pos = add_vectors(vertex_pos, chg_vectors[2*i])
                         for _ in range(int((layer + 1)/2) - 1):
                             shape += 1
-                            lattice.generate_polygon(vertex_pos, shape, cart_two)
+                            lattice.generate_shape(vertex_pos, shape, cart_two)
                             vertex_pos = add_vectors(vertex_pos, chg_vectors[(2*i) + 1])
         return lattice
 
@@ -1147,7 +1223,7 @@ class Square(RegularPolygon):
         """
         super().__init__(4, edge_length, centre, rotation)
 
-    def _generate_change_vectors(self): 
+    def generate_change_vectors(self): 
         """
         Private method to generate the lattice change vectors. For four-sided polygons the change vectors are
         the same as the shapes edge vectors. 
@@ -1160,7 +1236,7 @@ class Square(RegularPolygon):
         """
         return self.polygon_vectors
 
-    def _generate_lattice_circular(self, layers, chg_vectors):
+    def generate_lattice_from_vectors(self, layers, chg_vectors):
         """
         Private method to create the lattice object corresponding to the current regular polygon. With given
         layers and lattice change vectors this method generates and returns a lattice layer by layer around
@@ -1186,12 +1262,12 @@ class Square(RegularPolygon):
             radius_vec = (round((layer*2*self.radius_vec[0]) + self.radius_vec[0], 3), round((layer*2*self.radius_vec[1]) + self.radius_vec[1], 3))
             start_vertex_pos = add_vectors(self.centre, radius_vec)
             if layer == 0:
-                lattice.generate_polygon(start_vertex_pos, shape, chg_vectors)
+                lattice.generate_shape(start_vertex_pos, shape, chg_vectors)
                 shape += 1
             else:
                 for i in range(self.sides):
                     for _ in range(even_numbers[layer]):
-                        lattice.generate_polygon(start_vertex_pos, shape, chg_vectors)
+                        lattice.generate_shape(start_vertex_pos, shape, chg_vectors)
                         start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[i])
                         shape += 1
         return lattice
@@ -1237,7 +1313,7 @@ class Hexagon(RegularPolygon):
         """
         super().__init__(6, edge_length, centre, rotation)
 
-    def _generate_change_vectors(self):
+    def generate_change_vectors(self):
         """
         Private method to generate the lattice change vectors. For regular hexagons the change vectors are
         the equivalent to the addition of the first 2 radius vectors rotated about the centre by '.theta'.
@@ -1257,7 +1333,7 @@ class Hexagon(RegularPolygon):
         change_vectors = change_to_cart_dict(base_vector)
         return change_vectors
     
-    def _generate_lattice_circular(self, layers, chg_vectors):
+    def generate_lattice_from_vectors(self, layers, chg_vectors):
         """
         Private method to create the lattice object corresponding to the current regular polygon. With given
         layers and lattice change vectors this method generates and returns a lattice layer by layer around
@@ -1281,15 +1357,15 @@ class Hexagon(RegularPolygon):
         for layer in range(layers):
             if layer == 0:
                 start_vertex_pos = add_vectors(self.centre, self.radius_vec)
-                lattice.generate_polygon(start_vertex_pos, 0, self.polygon_vectors)
+                lattice.generate_shape(start_vertex_pos, 0, self.polygon_vectors)
             else:
                 start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[4])
-                lattice.generate_polygon(start_vertex_pos, shape, self.polygon_vectors)
+                lattice.generate_shape(start_vertex_pos, shape, self.polygon_vectors)
                 for i in range(self.sides):
                     for _ in range(layer):
                         shape += 1
                         start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[i])
-                        lattice.generate_polygon(start_vertex_pos, shape, self.polygon_vectors)
+                        lattice.generate_shape(start_vertex_pos, shape, self.polygon_vectors)
         return lattice
 
 class Septagon(RegularPolygon):
@@ -1330,7 +1406,7 @@ class NonRegularPolygon(Polygon):
         self.rotation = rotation
         self.polygon_vectors = self._generate_polygon_vectors()
 
-        self.generate_polygon(start_point, 0, self.polygon_vectors)
+        self.generate_shape(start_point, 0, self.polygon_vectors)
     
     # Future Method For Non-Regs
     def get_centroid(self):
@@ -1350,7 +1426,7 @@ class _FourSided(Polygon):
     """
     IMPLEMENT DOCUMENTATION
     """    
-    def _generate_lattice_circular(self, layers, chg_vectors): 
+    def generate_lattice_from_vectors(self, layers, chg_vectors): 
         """
         IMPLEMENT DOCUMENTATION
         """
@@ -1362,14 +1438,14 @@ class _FourSided(Polygon):
         shape = 0
         for layer in range(layers):
             if layer == 0:
-                lattice.generate_polygon(self.start_point, shape, chg_vectors)
+                lattice.generate_shape(self.start_point, shape, chg_vectors)
                 shape += 1
             else:
                 radius_vec = (round((layer*radius_vec[0]), 3), round((layer*radius_vec[1]), 3))
                 start_vertex_pos = add_vectors(self.start_point, radius_vec)
                 for i in range(4):
                     for _ in range(even_numbers[layer]):
-                        lattice.generate_polygon(start_vertex_pos, shape, chg_vectors)
+                        lattice.generate_shape(start_vertex_pos, shape, chg_vectors)
                         start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[i])
                         shape += 1
         return lattice
@@ -1386,7 +1462,7 @@ class Rectangle(NonRegularPolygon, _FourSided):
         self.width = width
         super().__init__(start_point, rotation)
     
-    def _generate_change_vectors(self): 
+    def generate_change_vectors(self): 
         """
         IMPLEMENT DOCUMENTATION
         """
@@ -1404,7 +1480,7 @@ class Rectangle(NonRegularPolygon, _FourSided):
             vectors[i + 1] = width_polar
         return change_to_cart_dict(vectors)
     
-    def _get_lattice_state(self):
+    def get_lattice_state(self):
         """
         IMPLEMENT DOCUMENTATION
         """
@@ -1424,7 +1500,7 @@ class Parallelogram(NonRegularPolygon, _FourSided):
         self.angle = angle
         super().__init__(start_point, rotation)
 
-    def _generate_change_vectors(self): 
+    def generate_change_vectors(self): 
         """
         IMPLEMENT DOCUMENTATION
         """
@@ -1442,14 +1518,14 @@ class Parallelogram(NonRegularPolygon, _FourSided):
             vectors[i + 1] = width_polar
         return change_to_cart_dict(vectors)
     
-    def _get_lattice_state(self):
+    def get_lattice_state(self):
         """
         IMPLEMENT DOCUMENTATION
         """
         return True
 
         
-class Lattice(Polygon):
+class Lattice(Shape):
     """
     IMPLEMENT DOCUMENTATION
     """
