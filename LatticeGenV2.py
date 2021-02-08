@@ -3,7 +3,7 @@ import cv2 as cv
 import numpy as np
 from math import sqrt, sin, cos, radians
 from exception import *
-from functions import add_vectors, change_to_cart_dict, change_to_cart_vector, check_if_coord, my_filled_circle, my_line, is_positive_int, is_supported_colour
+from functions import add_vectors, change_to_cart_vector, check_if_coord, my_filled_circle, my_line, is_positive_int, is_supported_colour, change_to_cart_list
 
 ## Potential Library Name: 'polylat', or 'polylatlib'
 
@@ -14,7 +14,17 @@ colours = ["black", "red", "green", "blue", "yellow", "orange", "purple"]
 class Shape():
     """
     Shape is the base parent class for all shape objects. This class implements the basic features
-    and methods of vertices and edges for all shapes. 
+    and methods of vertices and edges for all shapes.
+
+    Attributes
+    ----------
+    .vertices :  The list of all vertex names.
+    .vertices_info : The list of vertex tuples of vertices along with their associated property
+        dictionary. This dictionary contains the vertex properties position, size, and colour.
+    .edges :  The list of edges. Edges are stored as 2-tuples of the vertices at either end of
+        the edge.
+    .edge_info : The list of tuples of edges along with their associated information dictionary.
+        This dictionary contains the edge weight and colour.
     
     Example
     -------
@@ -33,16 +43,6 @@ class Shape():
     def __init__(self):
         """
         Initialise a Shape object to be populated with vertices and edges.
-
-        Attributes
-        ----------
-        .vertices :  The list of all vertex names.
-        .vertices_info : The list of vertex tuples of vertices along with their associated property
-            dictionary. This dictionary contains the vertex properties position, size, and colour.
-        .edges :  The list of edges. Edges are stored as 2-tuples of the vertices at either end of
-            the edge.
-        .edge_info : The list of tuples of edges along with their associated information dictionary.
-            This dictionary contains the edge weight and colour.
 
         Example
         -------
@@ -128,7 +128,7 @@ class Shape():
 
         Returns
         -------
-        boolean :
+        boolean
             True if 'a' is in the shape, False if not.
 
         Example
@@ -832,7 +832,6 @@ class Shape():
             if (edge_list[e], edge_list[e + 1]) not in self:
                 self.add_edge(edge_list[e], edge_list[e + 1])
         
-    
     ## TEMP ##
     def draw_shape(self):
         """
@@ -891,21 +890,19 @@ class Polygon(Shape):
     """
     def __init__(self):
         """
-        Initialises a Polygon object with vertices and edges as well as its lattice ability status.
+        Initialises a Polygon object, inherits from Shape..
         
         Example
         -------
-        ADD EXAMPLE
+        >>> ADD EXAMPLE
 
         Notes
         -----
-        The .can_lattice attribute is established here to be inherited by all future child classes
-        however the check method itself is to be implemented in these. This is for potential
-        future check method on all polygons on their ability to be tesselated.
+        ADD NOTES
         """
         super().__init__()
 
-    def generate_lattice_circular(self, layers):
+    def generate_lattice(self, layers, lat_type):
         """
         Generates the polygon's lattice in a given number of layers centred on the staring
         polygon. Uses the methods; 'generate_change_vectors' a 'generate_lattice_from_vectors'.
@@ -929,35 +926,36 @@ class Polygon(Shape):
         ADD NOTES
         """
         if self.get_lattice_state():
-            chg_vectors = self.generate_change_vectors()
-            return self.generate_lattice_from_vectors(layers, chg_vectors)  
+            if lat_type == "circular":
+                return self.generate_lattice_circular(layers)
+            elif lat_type == "stacked":
+                return self.generate_lattice_stacked(layers)
+            else:
+                raise PolyLatNotProp(lat_type)  
         else:
             print("Lattice not possible with this shape.")
 
-    @abc.abstractmethod
-    def generate_change_vectors(self):
-        """
-        Abstract method that generates and returns the change vectors that define the
-        movement between shapes within the lattice. To be defined in child classes.
-        """
-        return
 
-    # Rework this method to function similar to the generate_shape method !!!
     @abc.abstractmethod
-    def generate_lattice_from_vectors(self, layer, chg_vectors):
+    def generate_lattice_stacked(self, layers):
         """
-        Abstract method that generates and returns the specific lattice for polygons from a set of
-        change vectors. To be defined in child classes.
+        Abstract method that generates and returns the stacked lattice for polygons. To be defined
+        in child classes.
         """
-        return
+
+    @abc.abstractmethod
+    def generate_lattice_circular(self, layers):
+        """
+        Abstract method that generates and returns the circular lattice for polygons. To be defined
+        in child classes.
+        """
 
     @abc.abstractmethod
     def get_lattice_state(self):
         """
-        Abstract method that returns whether or not a polygon can have a lattioce generated from
-        it. To be defined in child classes.
+        Abstract method that returns whether or not a polygon can have a lattice generated from it.
+        To be defined in child classes.
         """
-        return
 
 
 class RegularPolygon(Polygon):
@@ -965,115 +963,119 @@ class RegularPolygon(Polygon):
     Regular polygons are defined to be polygons with all edges having equal length and all
     internal angles the same.
 
+    Attributes
+    ----------
+    .int_angle : The angle between edges within the shape.
+    .theta : The angle from one radii, from the centre to each vertex, to the next.
+    .radius : The length from the centre to any vertex in a regular polygon.
+    .radius_vector : The vector from the centre to the initial vertex, with regard to rotation.
+
+    Example
+    -------
+    >>> ADD EXAMPLE
+
+    Notes
+    -----    
+    Regular Polygons are defined by their number of sides and edge length. When
+    initialised, RegularPolygon implements both these parameters along with a user
+    defined centre for the shape and an angle of rotation. When called regular polygons
+    are automatically generated with help from some variables detailed below;
+
     The polygons of this type can thus be defined simply by their number of sides and edge
     length. Along with a given centre and a rotation all further features of these shapes can
     be found through private class methods.
     """
     def __init__(self, sides: int, edge_length, centre, rotation):
         """
-        Regular Polygons are defined by their number of sides and edge length. When
-        initialised, RegularPolygon implements both these parameters along with a user
-        defined centre for the shape and an angle of rotation. When called regular polygons
-        are automatically generated with help from some variables detailed below;
+        Initialises a Reular Polygon object.
 
-        '_set_radius_info()' calculates the radius vector for the shape. To calculate this, other shape
-            variables are calculated (shape angles and radius length). This method is called before
-            initialisation of parent class attributes for use in '.get_lattice_state' method.
-        '.polygon_vectors' sets the edge_vectors, using the private method '._generate_polygon_vectors', for
-            the polygon to then be used in parent class method 'generate_polygon'.
-
-        Error Handling: Series of checks for each parameter to ensure correct type. 
-
-        Parameters:
-            - sides:
-                type: int > 3,
-                description: The number of sides for the regular polygon.
-            - edge_length:
-                type: (int or float) > 0,
-                description: Edge length for all edges of the shape.
-            - centre:
-                type: (x, y) - Cartesian Coordinate (2-tuple with x, y values: int or float),
-                description: Centre point for the shape. For regular polygons this is possible as the uniform
-                    nature of the shape results in an equal radius to each vertex in the polygon.
-            - rotation:
-                type: Angle in the cyclic range (-360, 360),
-                description: The angle, in degrees, to rotate the shape arounds its centre anti-clockwise.
-                    (Though the type specifies range up to |360| degrees, 'rotation' is cyclic and values
-                    outside this reccomendation will still work).
+        Parameters
+        ----------
+        sides : int > 3
+            The number of sides for the regular polygon (Attribute).
+        edge_length : float > 0,
+            Edge length for all edges of the shape (Attribute).
+        centre : (x, y) - 2D Cartesian Coordinate
+            Centre point for the shape. For regular polygons this is possible as the uniform nature
+            of the shape results in an equal radius to each vertex in the polygon (Attribute).
+        rotation : angle
+            The angle, in degrees, to rotate the shape around the centre anti-clockwise. This value
+            is cyclic with period 360 degrees (Attribute).
         
-        Returns:
-            Nothing
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
         self.sides = sides
         self.edge_length = edge_length
         self.centre = centre
         self.rotation = rotation
 
-        # Error Handling for parameters.
+        # Error Handling for input attributes.
         if self.sides < 3:
-            raise ValueError("Argument 'sides' = {self.sides}. A regular polygon have at least 3 sides.".format(self=self))
+            raise ValueError(f"Argument 'sides' = {self.sides}. A regular polygon have at least 3 sides.")
         elif self.edge_length < 0:
             raise ValueError("Argument 'edge_length' = {self.edge_length}. Edges cannot be of negative length.".format(self=self))
         elif not check_if_coord(self.centre):
             raise PolyLatNotCart(self.centre)
-        elif self.rotation < - 360 and self.rotation > 360:
-            raise ValueError("Argument 'rotation' = {self.rotation}. Shape rotations should be within range (-360, 360).".format(self=self))
 
-        # Generates Regular Polygon with input data...
-        self._set_radius_info()
         super().__init__()
 
-        self.polygon_vectors = self._generate_polygon_vectors(self.sides)
-        start_pos = add_vectors(self.centre, self.radius_vec)
-        self.generate_shape(start_pos, 0, self.polygon_vectors)
-
-    def _set_radius_info(self):
-        """
-        Private method for regular polygons to establish shape specific atrributes related to radius
-        calculation.
-
-        '.int_angle' is the angle between edges within the shape.
-        '.theta' is the angle from one radii to the next about the centre.
-        '.radius' is the length of the radius vector.
-        '.radius_vector' is the vector from the centre to the initial vertex, with regard to rotation.
-
-        Parameters:
-            Nothing
-        
-        Returns:
-            Nothing
-        """
-        self.int_angle = round(((self.sides - 2)*180)/self.sides, 3)
+        # Set Radius related attributes
+        self.int_angle = round(((sides - 2)*180)/sides, 3)
         self.theta = 180 - self.int_angle
-        self.radius = round((self.edge_length)/(2*sin(radians(self.theta/2))), 3)
-        self.radius_vec = change_to_cart_vector((self.radius, self.rotation))
+        self.radius = round((edge_length)/(2*sin(radians(self.theta/2))), 3)
+        self.radius_vec = change_to_cart_vector((self.radius, rotation))
+
+        # Generate polygon
+        polygon_vectors = self.generate_polygon_vectors()
+        start_pos = add_vectors(centre, self.radius_vec)
+        self.generate_shape(start_pos, 0, polygon_vectors)
+
     
-    def _generate_polygon_vectors(self, sides):
+    def generate_polygon_vectors(self):
         """
-        Private method to generate the edge vectors for a regular polygon.
-        
-        Parameters:
-            Nothing
-        
-        Returns:
-            - vectors: indexed dictionary with edge vectors as values.
+        Generates and returns the edge vectors for a regular polygon.
+            
+        Returns
+        -------
+        edge_vectors : list
+            List with edge vectors as values.
+
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
-        vectors = []
+        edge_vectors = []
         for i in range(self.sides):
             angle = i*self.theta + (180 - (self.int_angle/2)) + self.rotation
-            vectors.append(change_to_cart_vector((self.edge_length, angle)))
-        return vectors
+            edge_vectors.append(change_to_cart_vector((self.edge_length, angle)))
+        return edge_vectors
     
     def get_lattice_state(self):
         """
-        Private method to check the ability for lattices to be created. For regular polygons this can be
-        acheived by seeing if the shape's internal angle divides 360 completly.
+        Returns True if lattice can be generated from current regular polygon. False otherwise.
 
-        Parameters:
-            Nothing
+        Returns
+        -------
+        boolean
+            Returns True if lattice can be generated from current regular polygon. False if not. 
 
-        Returns:
-            Nothing
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
         lattice_test = 360/self.int_angle
         return lattice_test.is_integer()
@@ -1087,82 +1089,73 @@ class EquilateralTriangle(RegularPolygon):
     """
     PRESET SHAPE: EquilateralTriangle
 
-    Equilateral triangles are 3 sided polygons with equal edge length and internal angle of 60 degrees.
-    The default Equilateral Triangle is generated "pointing" along the x-axis in the positive direction
-    centred at the origin (0, 0). 
+    Equilateral triangles are 3 sided polygons with equal edge length and internal angle of 60
+    degrees. The default Equilateral Triangle is generated "pointing" along the x-axis in the
+    positive direction centred at the origin (0, 0). 
     """
-    def __init__(self, edge_length = 1, centre = (0, 0), rotation = 0):
+    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
         Equilateral Triangles are initialised as Regular Polygons with 3 sides.
 
-        Parameters:
-            - edge_length:
-                default: 1,
-                type: (int or float) > 0,
-                description: The deired edge length for the triangles.
-            - centre:
-                default: Origin (0, 0),
-                type: (x, y) - Cartesian Coordinate (2-tuple with x, y values: int or float),
-                description: Centre position for the triangle.
-            - rotation:
-                default: 0,
-                type: Angle in the cyclic range (-360, 360),
-                description: The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
+        Parameters
+        ----------
+        edge_length : float > 0, Default = 1, optional
+            The deired edge length for the triangles.
+        centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
+            Centre position for the triangle.
+        rotation : angle, Default = 0, optional
+            The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
         
-        Returns:
-            Nothing
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
         super().__init__(3, edge_length, centre, rotation)
 
-    def generate_change_vectors(self):
+    def generate_lattice_circular(self, layers: int):
         """
-        Private method to generate the lattice change vectors. For triangles these are 6 vectors correspoding 
-        to the edge_vectors; 2 for each edge, 1 vector for each direction along the edge.
+        Generates and returns the circular lattice for Equilateral Triangles.
 
-        Parameters:
-            Nothing
-        
-        Returns:
-            - change_vectors: the vectors that move between shapes when generating the lattice. 
+        Parameters
+        ----------
+        layers : int > 0
+            The number of desired layers in the lattice.
+
+        Returns
+        -------
+        lattice : Lattice
+            Lattice object from 
+
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
-        base_vectors = {}
+        polar_vectors = []
         for i in range(2*self.sides):
-            base_vectors[i] = (self.edge_length, 30 + (i + 1)*self.int_angle + self.rotation)
-        change_vectors = change_to_cart_dict(base_vectors)
-        return change_vectors
-    
-    def generate_lattice_from_vectors(self, layers, chg_vectors):
-        """
-        Private method to create the lattice object corresponding to the current regular polygon. With given
-        layers and lattice change vectors this method generates and returns a lattice layer by layer around
-        the current regular polygon in a circular fashion.
+            polar_vectors.append((self.edge_length, 30 + (i + 1)*self.int_angle + self.rotation))
+        chg_vectors = change_to_cart_list(polar_vectors)
 
-        Parameters:
-            - layers:
-                type: int > 0,
-                description: Number of layers around the central polygon with layer = 1 being the just the
-                    original shape.
-            - chg_vectors:
-                type: dictionary,
-                description: dictionary of vectors describing motion between shapes in the lattice.
-
-        Return:
-            - Lattice: Lattice of Equilateral Triangles.
-        """
-        # Generates the 2 (relected) EquilateralTriangles used.
-        cart_one = {}
+        triangle_one = []
         for i in range(self.sides):
-            cart_one[i] = chg_vectors[2*i + 1]
-        cart_two = {}
+            triangle_one.append(chg_vectors[2*i + 1])
+        triangle_two = []
         for i in range(self.sides):
-            cart_two[i] = chg_vectors[len(chg_vectors) - (2*i + 1)]
-
-        lattice = Lattice(3, layers)
+            triangle_two.append(chg_vectors[len(chg_vectors) - (2*i + 1)])
+        
+        lattice = Lattice(layers)
         shape = 0
         origin_vertex = add_vectors(self.centre, self.radius_vec)
         for layer in range(layers):
             if layer == 0:
-                lattice.generate_shape(origin_vertex, shape, cart_one)
+                lattice.generate_shape(origin_vertex, shape, triangle_one)
             else:
                 if layer % 2 == 0: # Odd Layers
                     origin_vertex = add_vectors(origin_vertex, chg_vectors[5])
@@ -1171,11 +1164,11 @@ class EquilateralTriangle(RegularPolygon):
                     for i in range(3):
                         for _ in range(int(layer/2)):
                             shape += 1
-                            lattice.generate_shape(vertex_pos, shape, cart_one)
+                            lattice.generate_shape(vertex_pos, shape, triangle_one)
                             vertex_pos = add_vectors(vertex_pos, chg_vectors[2*i])
                         for _ in range(int(layer/2)):
                             shape += 1
-                            lattice.generate_shape(vertex_pos, shape, cart_one)
+                            lattice.generate_shape(vertex_pos, shape, triangle_one)
                             vertex_pos = add_vectors(vertex_pos, chg_vectors[(2*i) + 1])    
                 else: # Even Layers
                     origin_vertex = add_vectors(origin_vertex, chg_vectors[2])
@@ -1183,11 +1176,11 @@ class EquilateralTriangle(RegularPolygon):
                     for i in range(3):
                         for _ in range(int((layer + 1)/2)):
                             shape += 1
-                            lattice.generate_shape(vertex_pos, shape, cart_two)
+                            lattice.generate_shape(vertex_pos, shape, triangle_two)
                             vertex_pos = add_vectors(vertex_pos, chg_vectors[2*i])
                         for _ in range(int((layer + 1)/2) - 1):
                             shape += 1
-                            lattice.generate_shape(vertex_pos, shape, cart_two)
+                            lattice.generate_shape(vertex_pos, shape, triangle_two)
                             vertex_pos = add_vectors(vertex_pos, chg_vectors[(2*i) + 1])
         return lattice
 
@@ -1203,58 +1196,50 @@ class Square(RegularPolygon):
         """
         Squares are initialised as Regular Polygons with 4 sides.
 
-        Parameters:
-            - edge_length:
-                default: 1,
-                type: float > 0,
-                description: The deired edge length for the triangles.
-            - centre:
-                default: Origin (0, 0),
-                type: (x, y) - Cartesian Coordinate (2-tuple with x, y values: float),
-                description: Centre position for the triangle.
-            - rotation:
-                default: 0,
-                type: float, 
-                description: Angle in the cyclic range (-360, 360). The angle, in degrees, to rotate the triangle
-                    arounds its centre anti-clockwise.
+        Parameters
+        ----------
+        edge_length : float > 0, Default = 1, optional
+            The deired edge length for the triangles.
+        centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
+            Centre position for the triangle.
+        rotation : angle, Default = 0, optional
+            The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
         
-        Returns:
-            Nothing
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
         super().__init__(4, edge_length, centre, rotation)
 
-    def generate_change_vectors(self): 
+    def generate_lattice_circular(self, layers: int):
         """
-        Private method to generate the lattice change vectors. For four-sided polygons the change vectors are
-        the same as the shapes edge vectors. 
+        Generates and returns the circular lattice for Squares.
 
-        Parameters:
-            Nothing
-        
-        Returns:
-            - .polygon_vectors: the vectors that move between shapes when generating the lattice. 
+        Parameters
+        ----------
+        layers : int > 0
+            The number of desired layers in the lattice.
+
+        Returns
+        -------
+        lattice : Lattice
+            Lattice object from 
+
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
-        return self.polygon_vectors
+        chg_vectors = list(self.get_edge_vectors().values())
 
-    def generate_lattice_from_vectors(self, layers, chg_vectors):
-        """
-        Private method to create the lattice object corresponding to the current regular polygon. With given
-        layers and lattice change vectors this method generates and returns a lattice layer by layer around
-        the current regular polygon in a circular fashion.
-
-        Parameters:
-            - layers:
-                type: int > 0,
-                description: Number of layers around the central polygon with layer = 1 being the just the
-                    original shape.
-            - chg_vectors:
-                type: dictionary,
-                description: dictionary of vectors describing motion between shapes in the lattice.
-
-        Return:
-            - Lattice: Lattice of squares.
-        """
-        lattice = Lattice(4, layers)
+        lattice = Lattice(layers)
 
         even_numbers = list(range(0, 2*layers, 2))
         shape = 0
@@ -1272,11 +1257,12 @@ class Square(RegularPolygon):
                         shape += 1
         return lattice
 
+
 class Pentagon(RegularPolygon):
     """
     IMPLEMENT DOCUMENTATION
     """
-    def __init__(self, edge_length = 1, centre = (0, 0), rotation = 0):
+    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
         IMPLEMENT DOCUMENTATION
         """
@@ -1290,89 +1276,83 @@ class Hexagon(RegularPolygon):
     Regular hexagons are 6 sided polygons with internal angles of 120 degrees. The default Hexagon is positioned with
     its "top" and "bottom" edges parallel to the x-axis, centred at the origin.
     """
-    def __init__(self, edge_length = 1, centre = (0, 0), rotation = 0):
+    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
         Hexagons are initialised as Regular Polygons with 6 sides.
 
-        Parameters:
-            - edge_length:
-                default: 1,
-                type: (int or float) > 0,
-                description: The deired edge length for the triangles.
-            - centre:
-                default: Origin (0, 0),
-                type: (x, y) - Cartesian Coordinate (2-tuple with x, y values: int or float),
-                description: Centre position for the triangle.
-            - rotation:
-                default: 0,
-                type: Angle in the cyclic range (-360, 360),
-                description: The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
+        Parameters
+        ----------
+        edge_length : float > 0, Default = 1, optional
+            The deired edge length for the triangles.
+        centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
+            Centre position for the triangle.
+        rotation : angle, Default = 0, optional
+            The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
         
-        Returns:
-            Nothing
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
         super().__init__(6, edge_length, centre, rotation)
-
-    def generate_change_vectors(self):
+    
+    def generate_lattice_circular(self, layers: int):
         """
-        Private method to generate the lattice change vectors. For regular hexagons the change vectors are
-        the equivalent to the addition of the first 2 radius vectors rotated about the centre by '.theta'.
+        Generates and returns the circular lattice for Hexagons.
 
-        Parameters:
-            Nothing
-        
-        Returns:
-            - change_vectors: the vectors that move between shapes when generating the lattice. 
+        Parameters
+        ----------
+        layers : int > 0
+            The number of desired layers in the lattice.
+
+        Returns
+        -------
+        lattice : Lattice
+            Lattice object from 
+
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
         """
         edgeLengthPlus = 1.5*self.edge_length
         halfHexHeight = round(sqrt(0.75*((self.edge_length)**2)), 2)
         vector_length = round(sqrt(edgeLengthPlus**2 + halfHexHeight**2), 2)
-        base_vector = {}
+        polar_vectors = []
         for i in range(self.sides):
-            base_vector[i] = (vector_length, i*(self.theta) + self.theta/2 + self.rotation)
-        change_vectors = change_to_cart_dict(base_vector)
-        return change_vectors
-    
-    def generate_lattice_from_vectors(self, layers, chg_vectors):
-        """
-        Private method to create the lattice object corresponding to the current regular polygon. With given
-        layers and lattice change vectors this method generates and returns a lattice layer by layer around
-        the current regular polygon in a circular fashion.
+            polar_vectors.append((vector_length, i*(self.theta) + self.theta/2 + self.rotation))
+        chg_vectors = change_to_cart_list(polar_vectors)
 
-        Parameters:
-            - layers:
-                type: int > 0,
-                description: Number of layers around the central polygon with layer = 1 being the just the
-                    original shape.
-            - chg_vectors:
-                type: dictionary,
-                description: dictionary of vectors describing motion between shapes in the lattice.
+        lattice = Lattice(layers)
+        polygon_vectors = list(self.get_edge_vectors().values())
 
-        Return:
-            - Lattice: Lattice of hexagons. 
-        """
-        lattice = Lattice(6, layers)
-        
         shape = 1
         for layer in range(layers):
             if layer == 0:
                 start_vertex_pos = add_vectors(self.centre, self.radius_vec)
-                lattice.generate_shape(start_vertex_pos, 0, self.polygon_vectors)
+                lattice.generate_shape(start_vertex_pos, 0, polygon_vectors)
             else:
                 start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[4])
-                lattice.generate_shape(start_vertex_pos, shape, self.polygon_vectors)
+                lattice.generate_shape(start_vertex_pos, shape, polygon_vectors)
                 for i in range(self.sides):
                     for _ in range(layer):
                         shape += 1
                         start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[i])
-                        lattice.generate_shape(start_vertex_pos, shape, self.polygon_vectors)
+                        lattice.generate_shape(start_vertex_pos, shape, polygon_vectors)
         return lattice
+
 
 class Septagon(RegularPolygon):
     """
     IMPLEMENT DOCUMENTATION
     """
-    def __init__(self, edge_length = 1, centre = (0, 0), rotation = 0):
+    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
         IMPLEMENT DOCUMENTATION
         """
@@ -1383,7 +1363,7 @@ class Octagon(RegularPolygon):
     """
     IMPLEMENT DOCUMENTATION
     """
-    def __init__(self, edge_length = 1, centre = (0, 0), rotation = 0):
+    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
         IMPLEMENT DOCUMENTATION
         """
@@ -1392,156 +1372,24 @@ class Octagon(RegularPolygon):
 
 ############################################################################################
 
-
-class NonRegularPolygon(Polygon):
-    """
-    IMPLEMENT DOCUMENTATION
-    """
-    def __init__(self, start_point, rotation):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        super().__init__()
-        self.start_point = start_point
-        self.rotation = rotation
-        self.polygon_vectors = self._generate_polygon_vectors()
-
-        self.generate_shape(start_point, 0, self.polygon_vectors)
-    
-    # Future Method For Non-Regs
-    def get_centroid(self):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        return
-    
-    @abc.abstractmethod
-    def _generate_polygon_vectors(self):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        return
-
-class _FourSided(Polygon):
-    """
-    IMPLEMENT DOCUMENTATION
-    """    
-    def generate_lattice_from_vectors(self, layers, chg_vectors): 
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        lattice = Lattice(4, layers)
-        
-        radius_vec = add_vectors(chg_vectors[2], chg_vectors[3])
-
-        even_numbers = list(range(0, 2*layers, 2))
-        shape = 0
-        for layer in range(layers):
-            if layer == 0:
-                lattice.generate_shape(self.start_point, shape, chg_vectors)
-                shape += 1
-            else:
-                radius_vec = (round((layer*radius_vec[0]), 3), round((layer*radius_vec[1]), 3))
-                start_vertex_pos = add_vectors(self.start_point, radius_vec)
-                for i in range(4):
-                    for _ in range(even_numbers[layer]):
-                        lattice.generate_shape(start_vertex_pos, shape, chg_vectors)
-                        start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[i])
-                        shape += 1
-        return lattice
-
-class Rectangle(NonRegularPolygon, _FourSided):
-    """
-    IMPLEMENT DOCUMENTATION
-    """
-    def __init__(self, width, height, start_point = (0, 0), rotation = 0):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        self.height = height
-        self.width = width
-        super().__init__(start_point, rotation)
-    
-    def generate_change_vectors(self): 
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        return self.polygon_vectors
-
-    def _generate_polygon_vectors(self):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        vectors = {}
-        for i in range(0, 4, 2):
-            height_polar = (self.height, (i + 1)*90 + self.rotation)
-            width_polar = (self.width, (i + 2)*90 + self.rotation)
-            vectors[i] = height_polar
-            vectors[i + 1] = width_polar
-        return change_to_cart_dict(vectors)
-    
-    def get_lattice_state(self):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        return True
-    
-
-class Parallelogram(NonRegularPolygon, _FourSided):
-    """
-    IMPLEMENT DOCUMENTATION
-    """
-    def __init__(self, width, height, angle, start_point = (0, 0), rotation = 0):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        self.height = height
-        self.width = width
-        self.angle = angle
-        super().__init__(start_point, rotation)
-
-    def generate_change_vectors(self): 
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        return self.polygon_vectors
-
-    def _generate_polygon_vectors(self):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        vectors = {}
-        for i in range(0, 4, 2):
-            height_polar = (self.height, (i + 1)*90 + self.angle + self.rotation)
-            width_polar = (self.width, (i + 2)*90 + self.rotation)
-            vectors[i] = height_polar
-            vectors[i + 1] = width_polar
-        return change_to_cart_dict(vectors)
-    
-    def get_lattice_state(self):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        return True
-
         
 class Lattice(Shape):
     """
     IMPLEMENT DOCUMENTATION
     """
-    def __init__(self, sides, layers):
+    def __init__(self, layers):
         """
         IMPLEMENT DOCUMENTATION
         """
         super().__init__()
-        self.sides = sides
         self.layers = layers
     
     def get_shape_num(self):
         """
         IMPLEMENT DOCUMENTATION
         """
-        if self.sides % 3 == 0:
-            return int(1 + self.sides*(self.layers*(self.layers - 1)/2))
-        elif self.sides % 4 == 0:
+        sides = len(self.edges)
+        if sides % 3 == 0:
+            return int(1 + sides*(self.layers*(self.layers - 1)/2))
+        elif sides % 4 == 0:
             return int((1 + 2*(self.layers - 1))**2)

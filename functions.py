@@ -67,3 +67,10 @@ def change_to_cart_dict(dictionary):
         vector = change_to_cart_vector(dictionary[i])
         temp[i] = vector
     return temp
+
+def change_to_cart_list(vector_list):
+    temp = []
+    for i in vector_list:
+        vector = change_to_cart_vector(i)
+        temp.append(vector)
+    return temp
