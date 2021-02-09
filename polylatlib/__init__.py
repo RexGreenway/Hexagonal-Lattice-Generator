@@ -11,4 +11,4 @@ import polylatlib.classes
 from polylatlib.classes import *
 
 import polylatlib.functions
-from polylatlib.function import *
+from polylatlib.functions import *
