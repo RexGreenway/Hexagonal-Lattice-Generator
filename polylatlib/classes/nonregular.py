@@ -1,6 +1,6 @@
 import abc
-from LatticeGenV2 import Polygon, Lattice
-from functions import add_vectors, change_to_cart_dict, change_to_cart_vector, check_if_coord, my_filled_circle, my_line, is_positive_int, is_supported_colour, change_to_cart_list
+from polylatlib.classes.regular import Polygon, Lattice
+from polylatlib.functions import *
 
 class NonRegularPolygon(Polygon):
     """
