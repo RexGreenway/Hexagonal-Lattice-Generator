@@ -2,7 +2,7 @@
 **********
 Classes
 **********
-Classes for PolyLat.
+Classes for PolyLatLib.
 """
 
 import abc
