@@ -1,14 +1,14 @@
+"""
+**********
+Classes
+**********
+Classes for PolyLat.
+"""
+
 import abc
-import cv2 as cv
-import numpy as np
 from math import sqrt, sin, cos, radians
 from exception import *
-from functions import add_vectors, change_to_cart_vector, check_if_coord, my_filled_circle, my_line, is_positive_int, is_supported_colour, change_to_cart_list
-
-## Potential Library Name: 'polylat', or 'polylatlib'
-
-# Temp Colour List
-colours = ["black", "red", "green", "blue", "yellow", "orange", "purple"]
+from functions import *
 
 ### SHAPE (Parent Base Class) ###
 class Shape():
@@ -154,7 +154,7 @@ class Shape():
             except TypeError:
                 return False
 
-    def add_vertex(self, vertex_for_adding, position = None, size: int = 1, colour = "black"):
+    def add_vertex(self, vertex_for_adding, position = None, size: int = 4, colour = "b"):
         """
         Adds a desired vertex to the shape, with associated properties; positon, size, and colour. 
 
@@ -166,18 +166,19 @@ class Shape():
         position : (x, y) - 2D Cartesian Coordinate, Default = None, optional
             The desired position for the vertex in the form of a coordinate 2-tuple. New vertices
             have no postion by deafult allowing for the creation of a graph-like object.
-        size : int, Default = 1, optional
+        size : int, Default = 4, optional
             Size property to be ustilised upon drawing of the shape.
-        colour : colour, Default = "black", optional
+        colour : colour, Default = "b", optional
             Colour property to be utilisied upon drawing of the shape. Colour can be chosen from
-            list of options; black, red, green, blue, yellow, orange, purple, ...
+            the options: black, "k"; red, "r"; green, "g"; blue, "b"; cyan, "c"; magenta, "m";
+            yellow, "y". 
 
         Example
         -------
         >>> A = Shape()
         >>> A.add_vertex(1) # 'Abstract' vertex called '1' with no position.
         >>> A.add_vertex("Hello", (2, 3))   # A vertex called 'Hello' at position (2, 3).
-        >>> A.add_vertex("example", colour = "red")
+        >>> A.add_vertex("example", colour = "r")
         >>> print(A.vertices)
         [1, "Hello", "example"]
 
@@ -469,11 +470,7 @@ class Shape():
         
         Example
         -------
-        >>> A = Shape()
-        >>> for i in range(5):
-        >>>     A.add_vertex(i, colour = colours[i])
-        >>> A.get_vertex_colours()
-        {0: "black", 1: "red", 2: "green", 3: "blue", 4: "yellow"}
+        >>> ADD EXAMPLE
 
         Notes
         -----
@@ -482,7 +479,7 @@ class Shape():
         """
         return self.get_vertex_info("colour")
 
-    def add_edge(self, vertex_one, vertex_two, weight = 1, colour = "black"):
+    def add_edge(self, vertex_one, vertex_two, weight = 1, colour = "k"):
         """
         Adds a desired edge to the shape between 2 vertices, with associated properties; weight and
         colour.
@@ -495,16 +492,17 @@ class Shape():
             The vertex name for the other end of the edge. 
         weight : int > 0, Default = 1, optional
             Weight property to be utilisied upon drawing of the shape.
-        colour : colour, Default = "black", optional
+        colour : colour, Default = "k", optional
             Colour property to be utilisied upon drawing of the shape. Colour can be chosen from
-            list of options; black, red, green, blue, yellow, orange, purple, ...
+            the options: black, "k"; red, "r"; green, "g"; blue, "b"; cyan, "c"; magenta, "m";
+            yellow, "y". 
         
         Example
         -------
         >>> A = Shape()
         >>> A.add_edge(1, 2) # Adding edge between to new vetrices, 1, and 2.
         >>> A.add_edge("Hello", "World", 3) # An edge between 'Hello' and 'World' with weight 3.
-        >>> A.add_edge("Hello", "xmpl", colour = "red") # Establishing edge between exsiting vertex "Hello" and new vertex "xmpl".
+        >>> A.add_edge("Hello", "xmpl", colour = "r") # Establishing edge between exsiting vertex "Hello" and new vertex "xmpl".
         >>> print(A.edges)
         [(1, 2), ("Hello", "World"), ("Hello", "xmpl")]
 
@@ -831,36 +829,39 @@ class Shape():
         for e in range(len(vectors)):
             if (edge_list[e], edge_list[e + 1]) not in self:
                 self.add_edge(edge_list[e], edge_list[e + 1])
-        
-    ## TEMP ##
+    
     def draw_shape(self):
         """
-        Temporary draw_shape using OpenCV to view the results [Currently used for testing].
+        IMPLEMENT
         """
-        # Creates White Canvas
-        W = 800
-        size = W, W, 3
-        image = np.ones(size) 
-        # Get Graph Details
-        dic = self.get_vertex_positions()
-        graph = {0: dic, 1: self}
-        # Draw Edges
-        for edge in graph[1].edges:  
-            start_pos = graph[0][edge[0]]
-            start_pos_big = tuple([int(x * 20 + W/2) for x in start_pos])  # adapt position coords for pixel display
-            end_pos = graph[0][edge[1]]
-            end_pos_big = tuple([int(x * 20 + W/2) for x in end_pos])  # adapt position coords for pixel display
-            my_line(image, start_pos_big, end_pos_big)
-        # Draw Nodes
-        for node in graph[0]:  # draw nodes
-            node_pos = graph[0][node]
-            node_pos_big = tuple([int(x * 20 + W/2)for x in node_pos])  # adapt position coords for pixel display
-            my_filled_circle(image, node_pos_big)
-        # Creates window
-        cv.namedWindow("Diagram", cv.WINDOW_AUTOSIZE)  
-        cv.imshow("Diagram", image)  # displays window with image
-        cv.waitKey(0)
-        cv.destroyAllWindows()
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:
+            raise ImportError("Matplotlib required for draw_shape()")
+        except RuntimeError:
+            print("Matplotlib unable to open display")
+            raise
+        
+        fig, ax = plt.subplots()
+        # Adds edges to figure
+        vertex_positions = self.get_vertex_positions()
+        for edge in self.edges_info:
+            name = (edge[0], edge[1])
+            pos1 = vertex_positions[edge[0]]
+            pos2 = vertex_positions[edge[1]]
+            weight = edge[2]["weight"]
+            colour = edge[2]["colour"]
+            ax.plot([pos1[0], pos2[0]], [pos1[1], pos2[1]], color=colour, lw=weight)  
+        # Adds vertices to figure
+        for vertex in self.vertices_info:
+            name = vertex[0]
+            pos = vertex[1]["position"]
+            size = vertex[1]["size"]
+            col = vertex[1]["colour"] + "o"
+            ax.plot([pos[0]], [pos[1]], col, markersize=size)
+        ax.axis("off")
+        fig.set_tight_layout(True)
+        plt.show()
 
 
 ### POLYGON CLASS ###

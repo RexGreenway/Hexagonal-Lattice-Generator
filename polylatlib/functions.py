@@ -1,28 +1,13 @@
-import cv2 as cv
-import networkx as nx
-from math import sqrt, sin, cos, radians
+from math import sin, cos, radians
 
-## OPENCV Drawing Tools ##
-# Draws red dot with radius 2 on img at specified center.
-def my_filled_circle(img, center):
-    cv.circle(
-        img,
-        center,
-        2,
-        (0, 0, 255),
-        -1,
-        8)
-
-
-# Draws blue line with thickness 1 on img with specified endpoints.
-def my_line(img, start, end):
-    cv.line(
-        img,
-        start,
-        end,
-        (255, 0, 0),
-        1)
-
+__all__ = [
+    "check_if_coord",
+    "is_positive_int",
+    "is_supported_colour",
+    "add_vectors",
+    "change_to_cart_vector",
+    "change_to_cart_list"
+]
 
 ## VALUE CHECKING ##
 def check_if_coord(value):
@@ -42,7 +27,7 @@ def is_positive_int(value):
         return False
 
 def is_supported_colour(colour):
-    colours = ["black", "red", "green", "blue", "yellow", "orange", "purple"]
+    colours = ["k", "r", "g", "b", "c", "m", "y"]
     if colour in colours:
         return True
     else:
@@ -59,13 +44,6 @@ def change_to_cart_vector(polar_vector):
     x = polar_vector[0]*cos(radians(polar_vector[1]))
     y = polar_vector[0]*sin(radians(polar_vector[1]))
     temp = (round(x, 3), round(y, 3))
-    return temp
-
-def change_to_cart_dict(dictionary):
-    temp = {}
-    for i in range(len(dictionary)):
-        vector = change_to_cart_vector(dictionary[i])
-        temp[i] = vector
     return temp
 
 def change_to_cart_list(vector_list):
