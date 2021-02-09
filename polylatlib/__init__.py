@@ -4,6 +4,7 @@ PolyLatLib
 PolyLib is a Python package for the generation of shapes and their lattices.
 """
 
+import polylatlib.classes
 from polylatlib.exception import *
 
 import polylatlib.classes
