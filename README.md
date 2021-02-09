@@ -2,7 +2,7 @@
 By Rex Greenway
 
 This project aims to allow for the investigation of shapes in the R x R Cartesian Plane and their lattices. This Python library provides the functionality to generate, work with, view, and manipulate polygons in the 2D space and, for applciable shapes, generate the corresponding lattice in circular layers. (Currently also utilises OpenCV and Numpy)
-https://github.com/RexGreenway/Lattice-Generator.git
+https://github.com/RexGreenway/polylatlib.py.git
 
 # Version 2) (In progress..)
 Features so far:
