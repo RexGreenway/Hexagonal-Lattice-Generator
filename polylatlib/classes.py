@@ -7,8 +7,8 @@ Classes for PolyLat.
 
 import abc
 from math import sqrt, sin, cos, radians
-from exception import *
-from functions import *
+from polylatlib.exception import *
+from polylatlib.functions import *
 
 ### SHAPE (Parent Base Class) ###
 class Shape():
