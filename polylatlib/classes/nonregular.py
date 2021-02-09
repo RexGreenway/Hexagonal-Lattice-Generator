@@ -1,6 +1,13 @@
 import abc
-from polylatlib.classes.regular import Polygon, Lattice
+from polylatlib.classes.base_shapes import Shape, Polygon, Lattice
 from polylatlib.functions import *
+
+__all__ = [
+    "NonRegularPolygon",
+    "_FourSided",
+    "Rectangle",
+    "Parallelogram"
+]
 
 class NonRegularPolygon(Polygon):
     """
@@ -73,6 +80,7 @@ class Rectangle(NonRegularPolygon, _FourSided):
         """
         IMPLEMENT DOCUMENTATION
         """
+        ## CHANGE TO LIST OF VECTORS
         vectors = {}
         for i in range(0, 4, 2):
             height_polar = (self.height, (i + 1)*90 + self.rotation)
@@ -111,6 +119,7 @@ class Parallelogram(NonRegularPolygon, _FourSided):
         """
         IMPLEMENT DOCUMENTATION
         """
+        ## CHANGE TO LIST OF VECTORS
         vectors = {}
         for i in range(0, 4, 2):
             height_polar = (self.height, (i + 1)*90 + self.angle + self.rotation)
