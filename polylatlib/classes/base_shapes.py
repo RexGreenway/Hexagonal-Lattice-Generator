@@ -2,13 +2,15 @@
 **********
 Classes
 **********
-Classes for PolyLatLib.
+Base Shape classes for PolyLatLib.
+
 """
 
 import abc
 from math import sqrt, sin, cos, radians
 from polylatlib.exception import *
-from polylatlib.functions import * 
+from polylatlib.functions import add_vectors, is_positive_int, is_supported_colour, check_if_coord
+
 
 ### SHAPE (Parent Base Class) ###
 class Shape():
@@ -18,17 +20,33 @@ class Shape():
 
     Attributes
     ----------
-    .vertices :  The list of all vertex names.
-    .vertices_info : The list of vertex tuples of vertices along with their associated property
-        dictionary. This dictionary contains the vertex properties position, size, and colour.
-    .edges :  The list of edges. Edges are stored as 2-tuples of the vertices at either end of
-        the edge.
+    vertices : 
+        The list of all vertex names.
+    vertices_info : 
+        The list of vertex tuples of vertices along with their associated property dictionary.
+        This dictionary contains the vertex properties position, size, and colour.
+    .edges :
+        The list of edges. Edges are stored as 2-tuples of the vertices at either end of the edge.
     .edge_info : The list of tuples of edges along with their associated information dictionary.
         This dictionary contains the edge weight and colour.
     
     Example
     -------
-    >>> ADD EXAMPLE
+    # Drawing a custom 'house' shape using matplotlib.
+    >>> A = Shape()
+    >>> A.add_vertex(1, (1, 1), 10, "r")
+    >>> A.add_vertex(2, (4, 1), 2, "g")
+    >>> A.add_vertex(3, (4, 3), 6, "k")
+    >>> A.add_vertex(4, (1, 3))
+    >>> A.add_vertex(5, (2.5, 4))
+    >>> A.add_edge(1, 2, 2, "c")
+    >>> A.add_edge(2, 3, 3, "m")
+    >>> A.add_edge(3, 4, 4, "y")
+    >>> A.add_edge(4, 1, 5, "k")
+    >>> A.add_edge(3, 5)
+    >>> A.add_edge(4, 5)
+    >>> A.draw_shape()
+    <Matplotlib window displaying a multi-coloured house>
 
     Notes
     -----
@@ -54,7 +72,7 @@ class Shape():
         >>> print(A.vertices)
         [0, 1, 2, 3, 4, 8]
         >>> print(A.edges_info)
-        [((0, 1), {weight: 1, colour: "black"}), ((1, 8), {weight: 4, colour: "black"})]
+        [((0, 1), {weight: 1, colour: "k"}), ((1, 8), {weight: 4, colour: "k"})]
 
         Notes
         -----
@@ -86,9 +104,6 @@ class Shape():
         - Num. of Vertices: 6,
         - Num. of Edges: 5
 
-        Notes
-        -----
-        ADD NOTES
         """
         return (
             f"""
@@ -137,9 +152,6 @@ class Shape():
         >>> ("0-0", "0-1") in A
         True
 
-        Notes
-        -----
-        ADD NOTES
         """
         # First Checks if input could be an edge
         if type(a) == tuple and len(a) == 2:
@@ -156,7 +168,8 @@ class Shape():
 
     def add_vertex(self, vertex_for_adding, position = None, size: int = 4, colour = "b"):
         """
-        Adds a desired vertex to the shape, with associated properties; positon, size, and colour. 
+        Adds a desired vertex to the shape, with associated properties; positon, size, and
+        colour. 
 
         Parameters
         ----------
@@ -170,8 +183,8 @@ class Shape():
             Size property to be ustilised upon drawing of the shape.
         colour : colour, Default = "b", optional
             Colour property to be utilisied upon drawing of the shape. Colour can be chosen from
-            the options: black, "k"; red, "r"; green, "g"; blue, "b"; cyan, "c"; magenta, "m";
-            yellow, "y". 
+            the options: black - "k"; red - "r"; green - "g"; blue - "b"; cyan - "c"; magenta -
+            "m"; yellow - "y". 
 
         Example
         -------
@@ -190,13 +203,13 @@ class Shape():
         size, and colour.
         
         If initialised with no position the vertex can be considered an 'abstract' vertex with
-        position = None. This vertex is more akin to a node in a graph-like object and can still be
-        utilisied in the creation of edges resulting in a shape with no set strucutre except for
-        defined edges and vertices.
+        position = None. This vertex is more akin to a node in a graph-like object and can still
+        be utilisied in the creation of edges resulting in a shape with no set structure except
+        for defined edges and vertices.
 
-        When initialised with a position the vertex becomes a recognisable shape in the R x R 
-        Cartesian space with an x and y position. This position can also be imagined as the vector
-        from the origin to the point of the vertex.
+        When initialised with a position the vertex becomes a recognisable point in the R x R 
+        Cartesian space with an x and y position. This position can also be imagined as the
+        vector from the origin to the point of the vertex.
 
         Size and colour are utilisied in the drawing of the shape with size indicating the radius
         of the circle drawn at the vertex point. Colour is self-explanatory.
@@ -236,18 +249,24 @@ class Shape():
         item_for_update : vertex or edge
             A vertex or edge to have the desired property updated.
         prop : vertex or edge property
-            Vertex property's are "position", "size", or "colour". Edge property's are "weight", or
-            "colour".
+            Vertex property's are "position", "size", or "colour". Edge property's are
+            "weight", or "colour".
         value : property dependent
             The new value to be inserted into the desired property for the given vertex.
         
         Examples
         --------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c")
+        >>> A.update(1, "position", (1, 1))
+        >>> print(A.vertices_info)
+        [(1, {'position': (1, 1), 'size': 4, 'colour': 'b'}), (2, {'position': None, 'size': 4,
+        'colour': 'b'})]
 
         Notes
         -----
-        ADD NOTES
+        This method dynamically detects if the item entered is an edge or a vertex and then
+        proceeds to call the specific update method as nessecary.
         """
         if item_for_update in self:
             # Check if item is edge
@@ -275,11 +294,13 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.update_vertex(1, "position", (1, 1))
+        >>> print(A.vertices_info)
+        [(1, {'position': (1, 1), 'size': 4, 'colour': 'b'}), (2, {'position': None, 'size': 4,
+        'colour': 'b'})]
 
-        Notes
-        -----
-        ADD NOTES
         """
         # Checks vertex existence
         if vertex_for_update in self.vertices:
@@ -306,11 +327,13 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.update_vertex_position(1, (1, 1))
+        >>> print(A.vertices_info)
+        [(1, {'position': (1, 1), 'size': 4, 'colour': 'b'}), (2, {'position': None, 'size': 4,
+        'colour': 'b'})]
 
-        Notes
-        -----
-        ADD NOTES
         """
         if vertex_for_update in self.vertices:
             if check_if_coord(value):
@@ -334,11 +357,13 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.update_vertex_size(1, 20) # Sets vertex size to 20
+        >>> print(A.vertices_info)
+        [(1, {'position': None, 'size': 20, 'colour': 'b'}), (2, {'position': None, 'size': 4,
+        'colour': 'b'})]
 
-        Notes
-        -----
-        ADD NOTES
         """
         if vertex_for_update in self.vertices:
             if is_positive_int(value):
@@ -362,11 +387,13 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.update_vertex_size(1, "r") # Sets vertex colour to red
+        >>> print(A.vertices_info)
+        [(1, {'position': None, 'size': 20, 'colour': 'r'}), (2, {'position': None, 'size': 4,
+        'colour': 'b'})]
 
-        Notes
-        -----
-        ADD NOTES
         """
         if vertex_for_update in self.vertices:
             if is_supported_colour(value):
@@ -394,11 +421,16 @@ class Shape():
         
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Square(2, (1, 1), 45) # A square centred on (1, 1) with side length 2 
+        >>> A.add_vertex("Centre", (1, 1), 8, "r") # Red central vertex at (1, 1)
+        >>> print(A.get_vertex_info("position"))
+        {'0-0': (2.0, 2.0), '0-1': (0.0, 2.0), '0-2': (0.0, 0.0), '0-3': (2.0, 0.0), 'Centre': (1, 1)}
 
         Notes
         -----
-        ADD NOTES
+        This method returns a very usable collection of all vertices in the shape with their
+        associated desired property.
+
         """
         try:
             vertex_info = {}
@@ -470,7 +502,12 @@ class Shape():
         
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = Shape()
+        >>> for i in range(0, 6, 2): # Alternating blue and red vertices.
+        >>>     A.add_vertex(i)
+        >>>     A.add_vertex(i + 1, colour="r")
+        >>> A.get_vertex_colours()
+        {0: "b", 1: "r", 2: "b", 3: "r", 4: "b", 5: "r"}
 
         Notes
         -----
@@ -493,9 +530,9 @@ class Shape():
         weight : int > 0, Default = 1, optional
             Weight property to be utilisied upon drawing of the shape.
         colour : colour, Default = "k", optional
-            Colour property to be utilisied upon drawing of the shape. Colour can be chosen from
-            the options: black, "k"; red, "r"; green, "g"; blue, "b"; cyan, "c"; magenta, "m";
-            yellow, "y". 
+            Colour property to be utilisied upon drawing of the shape. Colour can be chosen
+            from the options: black - "k"; red - "r"; green - "g"; blue - "b"; cyan - "c";
+            magenta - "m"; yellow - "y". 
         
         Example
         -------
@@ -509,13 +546,14 @@ class Shape():
         Notes
         -----
         Edges are a connecting line between two vertices and are stored as a tuple of these two
-        defining vertex ends. You cannot have multiple edges between the same two vertices and thus
-        edges are uniquely defined by their vertex pair, this also means that (a, b) = (b, a). Edge
-        properies are weight and size. Weight references the 'thickness' of the edge line and colour
-        is self-explanatory. These properties utilised in the drawing of shapes. 
+        defining vertices. You cannot have multiple edges between the same two vertices and
+        thus edges are uniquely defined by their vertex pair, this also means that
+        (a, b) = (b, a). Edge properies are weight and size. Weight references the 'thickness'
+        of the edge line and colour is self-explanatory. These properties utilised in the
+        drawing of shapes. 
 
-        Vertices not pre-exsiting within the shape are automatically generated and added with no 
-        position and default size and colour.
+        Vertices not pre-exsiting within the shape are automatically generated and added with
+        no position and default size and colour.
         """
         # Checks if edge (in either direction) pre-exists
         if (vertex_one, vertex_two) not in self:
@@ -547,23 +585,30 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.update_edge(1, "colour", "r") # Sets edge colour to red
+        >>> print(A.edges_info)
 
         Notes
         -----
-        ADD NOTES
+        ADD NOTEs checkekksks
         """
         # Checks existence of edge in shape
-        if edge_for_update in self:
-            # Method selector
-            try:
-                method_name = "update_edge_" + prop
-                method = getattr(self, method_name)
-                method(edge_for_update, value)
-            except AttributeError:
-                raise PolyLatNotProp(prop)
+        if edge_for_update == "a":
+            print("test")
+            if edge_for_update in self:
+                # Method selector
+                try:
+                    method_name = "update_edge_" + prop
+                    method = getattr(self, method_name)
+                    method(edge_for_update, value)
+                except AttributeError:
+                    raise PolyLatNotProp(prop)
+            else:
+                raise PolyLatError(f"'{edge_for_update}' does not exist.")
         else:
-            raise PolyLatError(f"'{edge_for_update}' does not exist.")
+            raise PolyLatError(f"{edge_for_update} is not an edge.")
 
     def update_edge_weight(self, edge_for_update, value):
         """
@@ -979,3 +1024,7 @@ class Lattice(Shape):
             return int(1 + sides*(self.layers*(self.layers - 1)/2))
         elif sides % 4 == 0:
             return int((1 + 2*(self.layers - 1))**2)
+
+
+if __name__ == "__main__":
+    print("test")

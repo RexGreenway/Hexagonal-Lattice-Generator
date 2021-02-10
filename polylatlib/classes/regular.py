@@ -1,7 +1,7 @@
 from math import sqrt, sin, cos, radians
 from polylatlib.classes.base_shapes import Shape, Polygon, Lattice
-from polylatlib.functions import *
-from polylatlib.exception import *
+from polylatlib.functions import change_to_cart_list, change_to_cart_vector, check_if_coord, add_vectors
+from polylatlib.exception import PolyLatError, PolyLatNotCart
 
 __all__ = [
     "RegularPolygon",

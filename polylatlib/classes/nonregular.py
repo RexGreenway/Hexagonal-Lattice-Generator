@@ -1,10 +1,10 @@
 import abc
-from polylatlib.classes.base_shapes import Shape, Polygon, Lattice
-from polylatlib.functions import *
+from polylatlib.classes.base_shapes import Polygon, Lattice
+from polylatlib.functions import add_vectors, change_to_cart_list
 
 __all__ = [
     "NonRegularPolygon",
-    "_FourSided",
+    "FourSided",
     "Rectangle",
     "Parallelogram"
 ]
@@ -30,7 +30,7 @@ class NonRegularPolygon(Polygon):
         IMPLEMENT DOCUMENTATION
         """
 
-class _FourSided(Polygon):
+class FourSided(Polygon):
     """
     IMPLEMENT DOCUMENTATION
     """    
@@ -58,7 +58,7 @@ class _FourSided(Polygon):
                         shape += 1
         return lattice
 
-class Rectangle(NonRegularPolygon, _FourSided):
+class Rectangle(NonRegularPolygon, FourSided):
     """
     IMPLEMENT DOCUMENTATION
     """
@@ -81,13 +81,13 @@ class Rectangle(NonRegularPolygon, _FourSided):
         IMPLEMENT DOCUMENTATION
         """
         ## CHANGE TO LIST OF VECTORS
-        vectors = {}
+        vectors = []
         for i in range(0, 4, 2):
-            height_polar = (self.height, (i + 1)*90 + self.rotation)
-            width_polar = (self.width, (i + 2)*90 + self.rotation)
-            vectors[i] = height_polar
-            vectors[i + 1] = width_polar
-        return change_to_cart_dict(vectors)
+            height_polar = (self.height, (i)*90 + self.rotation)
+            width_polar = (self.width, (i + 1)*90 + self.rotation)
+            vectors.append(height_polar)
+            vectors.append(width_polar)
+        return change_to_cart_list(vectors)
     
     def get_lattice_state(self):
         """
@@ -96,7 +96,7 @@ class Rectangle(NonRegularPolygon, _FourSided):
         return True
     
 
-class Parallelogram(NonRegularPolygon, _FourSided):
+class Parallelogram(NonRegularPolygon, FourSided):
     """
     IMPLEMENT DOCUMENTATION
     """
@@ -120,13 +120,13 @@ class Parallelogram(NonRegularPolygon, _FourSided):
         IMPLEMENT DOCUMENTATION
         """
         ## CHANGE TO LIST OF VECTORS
-        vectors = {}
+        vectors = []
         for i in range(0, 4, 2):
             height_polar = (self.height, (i + 1)*90 + self.angle + self.rotation)
             width_polar = (self.width, (i + 2)*90 + self.rotation)
-            vectors[i] = height_polar
-            vectors[i + 1] = width_polar
-        return change_to_cart_dict(vectors)
+            vectors.append(height_polar)
+            vectors.append(width_polar)
+        return change_to_cart_list(vectors)
     
     def get_lattice_state(self):
         """
