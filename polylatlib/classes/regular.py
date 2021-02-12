@@ -31,7 +31,7 @@ class RegularPolygon(Polygon):
     >>> ADD EXAMPLE
 
     Notes
-    -----    
+    -----
     Regular Polygons are defined by their number of sides and edge length. When
     initialised, RegularPolygon implements both these parameters along with a user
     defined centre for the shape and an angle of rotation. When called regular polygons
@@ -57,7 +57,7 @@ class RegularPolygon(Polygon):
         rotation : angle
             The angle, in degrees, to rotate the shape around the centre anti-clockwise. This value
             is cyclic with period 360 degrees (Attribute).
-        
+
         Example
         -------
         >>> ADD EXAMPLE
@@ -92,11 +92,11 @@ class RegularPolygon(Polygon):
         start_pos = add_vectors(centre, self.radius_vec)
         self.generate_shape(start_pos, 0, polygon_vectors)
 
-    
+
     def generate_polygon_vectors(self):
         """
         Generates and returns the edge vectors for a regular polygon.
-            
+
         Returns
         -------
         edge_vectors : list
@@ -115,7 +115,7 @@ class RegularPolygon(Polygon):
             angle = i*self.theta + (180 - (self.int_angle/2)) + self.rotation
             edge_vectors.append(change_to_cart_vector((self.edge_length, angle)))
         return edge_vectors
-    
+
     def get_lattice_state(self):
         """
         Returns True if lattice can be generated from current regular polygon. False otherwise.
@@ -123,7 +123,7 @@ class RegularPolygon(Polygon):
         Returns
         -------
         boolean
-            Returns True if lattice can be generated from current regular polygon. False if not. 
+            Returns True if lattice can be generated from current regular polygon. False if not.
 
         Example
         -------
@@ -135,8 +135,8 @@ class RegularPolygon(Polygon):
         """
         lattice_test = 360/self.int_angle
         return lattice_test.is_integer()
-    
-    
+
+
 
 ################## PRESETs for REGULAR POLYGONs ######################
 
@@ -147,7 +147,7 @@ class EquilateralTriangle(RegularPolygon):
 
     Equilateral triangles are 3 sided polygons with equal edge length and internal angle of 60
     degrees. The default Equilateral Triangle is generated "pointing" along the x-axis in the
-    positive direction centred at the origin (0, 0). 
+    positive direction centred at the origin (0, 0).
     """
     def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
@@ -161,7 +161,7 @@ class EquilateralTriangle(RegularPolygon):
             Centre position for the triangle.
         rotation : angle, Default = 0, optional
             The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
-        
+
         Example
         -------
         >>> ADD EXAMPLE
@@ -184,7 +184,7 @@ class EquilateralTriangle(RegularPolygon):
         Returns
         -------
         lattice : Lattice
-            Lattice object from 
+            Lattice object from
 
         Example
         -------
@@ -205,7 +205,7 @@ class EquilateralTriangle(RegularPolygon):
         triangle_two = []
         for i in range(self.sides):
             triangle_two.append(chg_vectors[len(chg_vectors) - (2*i + 1)])
-        
+
         lattice = Lattice(layers)
         shape = 0
         origin_vertex = add_vectors(self.centre, self.radius_vec)
@@ -225,7 +225,7 @@ class EquilateralTriangle(RegularPolygon):
                         for _ in range(int(layer/2)):
                             shape += 1
                             lattice.generate_shape(vertex_pos, shape, triangle_one)
-                            vertex_pos = add_vectors(vertex_pos, chg_vectors[(2*i) + 1])    
+                            vertex_pos = add_vectors(vertex_pos, chg_vectors[(2*i) + 1])
                 else: # Even Layers
                     origin_vertex = add_vectors(origin_vertex, chg_vectors[2])
                     vertex_pos = origin_vertex
@@ -240,6 +240,42 @@ class EquilateralTriangle(RegularPolygon):
                             vertex_pos = add_vectors(vertex_pos, chg_vectors[(2*i) + 1])
         return lattice
 
+    def generate_lattice_stacked(self, rows, columns):
+        """
+        Generates and returns the stacked lattice for the Equilateral Triangles.
+
+        """
+        edge_vec_1 = list(self.get_edge_vectors().values())
+        edge_vec_2 = [edge_vec_1[2], edge_vec_1[1], edge_vec_1[0]]
+
+        edge_vec = [edge_vec_1, edge_vec_2]
+
+        move_row = [edge_vec_1[0], edge_vec_1[2]]
+        move_col = [edge_vec_1[2], (-edge_vec_1[0][0], -edge_vec_1[0][1])]
+
+        lattice = Lattice(1)
+        origin_vertex = add_vectors(self.centre, self.radius_vec)
+        for i in range(rows):
+            col_pos = origin_vertex
+            if i % 2 == 0:
+                for j in range(columns):
+                    if j % 2 == 0:
+                        lattice.generate_shape(col_pos, str(i) + str(j), edge_vec[(i % 2)])
+                    else:
+                        lattice.generate_shape(col_pos, str(i) + str(j), edge_vec[(i % 2) - 1])
+                        col_pos = add_vectors(col_pos, move_col[0])
+                        col_pos = add_vectors(col_pos, move_col[1])
+                origin_vertex = add_vectors(origin_vertex, move_row[(i % 2)])
+            else:
+                for j in range(columns):
+                    if j % 2 == 0:
+                        lattice.generate_shape(col_pos, str(i) + str(j), edge_vec[(i % 2)])
+                        col_pos = add_vectors(col_pos, move_col[0])
+                        col_pos = add_vectors(col_pos, move_col[1])
+                    else:
+                        lattice.generate_shape(col_pos, str(i) + str(j), edge_vec[(i % 2) - 1])
+                origin_vertex = add_vectors(origin_vertex, move_row[(i % 2)])
+        return lattice
 
 class Square(RegularPolygon):
     """
@@ -260,7 +296,7 @@ class Square(RegularPolygon):
             Centre position for the triangle.
         rotation : angle, Default = 0, optional
             The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
-        
+
         Example
         -------
         >>> ADD EXAMPLE
@@ -283,7 +319,7 @@ class Square(RegularPolygon):
         Returns
         -------
         lattice : Lattice
-            Lattice object from 
+            Lattice object from
 
         Example
         -------
@@ -313,6 +349,12 @@ class Square(RegularPolygon):
                         shape += 1
         return lattice
 
+    def generate_lattice_stacked(self, rows, columns):
+        """
+        Generates and returns the stacked lattice for the Squares.
+
+        """
+        pass
 
 class Pentagon(RegularPolygon):
     """
@@ -344,7 +386,7 @@ class Hexagon(RegularPolygon):
             Centre position for the triangle.
         rotation : angle, Default = 0, optional
             The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
-        
+
         Example
         -------
         >>> ADD EXAMPLE
@@ -354,7 +396,7 @@ class Hexagon(RegularPolygon):
         ADD NOTES
         """
         super().__init__(6, edge_length, centre, rotation)
-    
+
     def generate_lattice_circular(self, layers: int):
         """
         Generates and returns the circular lattice for Hexagons.
@@ -367,7 +409,7 @@ class Hexagon(RegularPolygon):
         Returns
         -------
         lattice : Lattice
-            Lattice object from 
+            Lattice object from
 
         Example
         -------
@@ -403,6 +445,12 @@ class Hexagon(RegularPolygon):
                         lattice.generate_shape(start_vertex_pos, shape, polygon_vectors)
         return lattice
 
+    def generate_lattice_stacked(self, rows, columns):
+        """
+        Generates and returns the stacked lattice for the Hexagons.
+
+        """
+        pass
 
 class Septagon(RegularPolygon):
     """
