@@ -1056,7 +1056,3 @@ class Lattice(Shape):
             return int(1 + sides*(self.layers*(self.layers - 1)/2))
         elif sides % 4 == 0:
             return int((1 + 2*(self.layers - 1))**2)
-
-
-if __name__ == "__main__":
-    print("test")
