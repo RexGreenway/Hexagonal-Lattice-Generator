@@ -828,7 +828,6 @@ class Shape():
                 return self.get_edge_vectors()[e]
         raise PolyLatNotExist(edge)
 
-
     def generate_shape(self, vertex_pos, shape_name, vectors):
         """
         Generates a named shape from a series of edge vectors staring at a given point.
@@ -836,7 +835,7 @@ class Shape():
         Parameters
         ----------
         vertex_pos : (x, y) - 2D Cartesian Coordinate
-            Start position for the initial vertex in the polygon.
+            Start position for the initial vertex in the shape.
         shape_name : string, int, or float
             This is the overiding shape name dictating all the vertex names within the shape.
             Vertex names are of the form; 'shape_name-k', where k is number of the vertex.
@@ -874,6 +873,39 @@ class Shape():
         for e in range(len(vectors)):
             if (edge_list[e], edge_list[e + 1]) not in self:
                 self.add_edge(edge_list[e], edge_list[e + 1])
+        
+    def generate_from_vectors(self, start_pos, vectors):
+        """
+        Generates and returns lattice type object of the current polygon located according to given
+        vectors.
+
+        Parameters
+        ----------
+        start_pos : (x, y) - 2D Cartesian Coordinate
+            Start position for the initial vertex in the shape.
+        vectors : list
+            List of vectors to describe positions for the current shape to be drawn in.
+        
+        Returns
+        -------
+        lattice : Lattice
+            Lattice object of the current shape drawn in position described by the input vectors.
+
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
+        """
+        lattice = Lattice(1)
+        edge_vec = list(self.get_edge_vectors().values())
+        lattice.generate_shape(start_pos, "0", edge_vec)
+        for i in range(len(vectors)):
+            start_pos = add_vectors(start_pos, vectors[i])
+            lattice.generate_shape(start_pos, str(i + 1), edge_vec)
+        return lattice
     
     def draw_shape(self):
         """
