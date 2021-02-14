@@ -2,13 +2,15 @@
 **********
 Classes
 **********
-Classes for PolyLatLib.
+Base Shape classes for PolyLatLib.
+
 """
 
 import abc
 from math import sqrt, sin, cos, radians
 from polylatlib.exception import *
-from polylatlib.functions import *
+from polylatlib.functions import add_vectors, is_positive_int, is_supported_colour, check_if_coord
+
 
 ### SHAPE (Parent Base Class) ###
 class Shape():
@@ -18,17 +20,33 @@ class Shape():
 
     Attributes
     ----------
-    .vertices :  The list of all vertex names.
-    .vertices_info : The list of vertex tuples of vertices along with their associated property
-        dictionary. This dictionary contains the vertex properties position, size, and colour.
-    .edges :  The list of edges. Edges are stored as 2-tuples of the vertices at either end of
-        the edge.
+    vertices : 
+        The list of all vertex names.
+    vertices_info : 
+        The list of vertex tuples of vertices along with their associated property dictionary.
+        This dictionary contains the vertex properties position, size, and colour.
+    .edges :
+        The list of edges. Edges are stored as 2-tuples of the vertices at either end of the edge.
     .edge_info : The list of tuples of edges along with their associated information dictionary.
         This dictionary contains the edge weight and colour.
     
     Example
     -------
-    >>> ADD EXAMPLE
+    # Drawing a custom 'house' shape using matplotlib.
+    >>> A = Shape()
+    >>> A.add_vertex(1, (1, 1), 10, "r")
+    >>> A.add_vertex(2, (4, 1), 2, "g")
+    >>> A.add_vertex(3, (4, 3), 6, "k")
+    >>> A.add_vertex(4, (1, 3))
+    >>> A.add_vertex(5, (2.5, 4))
+    >>> A.add_edge(1, 2, 2, "c")
+    >>> A.add_edge(2, 3, 3, "m")
+    >>> A.add_edge(3, 4, 4, "y")
+    >>> A.add_edge(4, 1, 5, "k")
+    >>> A.add_edge(3, 5)
+    >>> A.add_edge(4, 5)
+    >>> A.draw_shape()
+    <Matplotlib window displaying a multi-coloured house>
 
     Notes
     -----
@@ -54,7 +72,7 @@ class Shape():
         >>> print(A.vertices)
         [0, 1, 2, 3, 4, 8]
         >>> print(A.edges_info)
-        [((0, 1), {weight: 1, colour: "black"}), ((1, 8), {weight: 4, colour: "black"})]
+        [((0, 1), {weight: 1, colour: "k"}), ((1, 8), {weight: 4, colour: "k"})]
 
         Notes
         -----
@@ -86,9 +104,6 @@ class Shape():
         - Num. of Vertices: 6,
         - Num. of Edges: 5
 
-        Notes
-        -----
-        ADD NOTES
         """
         return (
             f"""
@@ -137,9 +152,6 @@ class Shape():
         >>> ("0-0", "0-1") in A
         True
 
-        Notes
-        -----
-        ADD NOTES
         """
         # First Checks if input could be an edge
         if type(a) == tuple and len(a) == 2:
@@ -156,7 +168,8 @@ class Shape():
 
     def add_vertex(self, vertex_for_adding, position = None, size: int = 4, colour = "b"):
         """
-        Adds a desired vertex to the shape, with associated properties; positon, size, and colour. 
+        Adds a desired vertex to the shape, with associated properties; positon, size, and
+        colour. 
 
         Parameters
         ----------
@@ -170,8 +183,8 @@ class Shape():
             Size property to be ustilised upon drawing of the shape.
         colour : colour, Default = "b", optional
             Colour property to be utilisied upon drawing of the shape. Colour can be chosen from
-            the options: black, "k"; red, "r"; green, "g"; blue, "b"; cyan, "c"; magenta, "m";
-            yellow, "y". 
+            the options: black - "k"; red - "r"; green - "g"; blue - "b"; cyan - "c"; magenta -
+            "m"; yellow - "y". 
 
         Example
         -------
@@ -190,13 +203,13 @@ class Shape():
         size, and colour.
         
         If initialised with no position the vertex can be considered an 'abstract' vertex with
-        position = None. This vertex is more akin to a node in a graph-like object and can still be
-        utilisied in the creation of edges resulting in a shape with no set strucutre except for
-        defined edges and vertices.
+        position = None. This vertex is more akin to a node in a graph-like object and can still
+        be utilisied in the creation of edges resulting in a shape with no set structure except
+        for defined edges and vertices.
 
-        When initialised with a position the vertex becomes a recognisable shape in the R x R 
-        Cartesian space with an x and y position. This position can also be imagined as the vector
-        from the origin to the point of the vertex.
+        When initialised with a position the vertex becomes a recognisable point in the R x R 
+        Cartesian space with an x and y position. This position can also be imagined as the
+        vector from the origin to the point of the vertex.
 
         Size and colour are utilisied in the drawing of the shape with size indicating the radius
         of the circle drawn at the vertex point. Colour is self-explanatory.
@@ -236,18 +249,24 @@ class Shape():
         item_for_update : vertex or edge
             A vertex or edge to have the desired property updated.
         prop : vertex or edge property
-            Vertex property's are "position", "size", or "colour". Edge property's are "weight", or
-            "colour".
+            Vertex property's are "position", "size", or "colour". Edge property's are
+            "weight", or "colour".
         value : property dependent
             The new value to be inserted into the desired property for the given vertex.
         
         Examples
         --------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c")
+        >>> A.update(1, "position", (1, 1))
+        >>> print(A.vertices_info)
+        [(1, {'position': (1, 1), 'size': 4, 'colour': 'b'}), (2, {'position': None, 'size': 4,
+        'colour': 'b'})]
 
         Notes
         -----
-        ADD NOTES
+        This method dynamically detects if the item entered is an edge or a vertex and then
+        proceeds to call the specific update method as nessecary.
         """
         if item_for_update in self:
             # Check if item is edge
@@ -275,11 +294,13 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.update_vertex(1, "position", (1, 1))
+        >>> print(A.vertices_info)
+        [(1, {'position': (1, 1), 'size': 4, 'colour': 'b'}), (2, {'position': None, 'size': 4,
+        'colour': 'b'})]
 
-        Notes
-        -----
-        ADD NOTES
         """
         # Checks vertex existence
         if vertex_for_update in self.vertices:
@@ -306,11 +327,13 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.update_vertex_position(1, (1, 1))
+        >>> print(A.vertices_info)
+        [(1, {'position': (1, 1), 'size': 4, 'colour': 'b'}), (2, {'position': None, 'size': 4,
+        'colour': 'b'})]
 
-        Notes
-        -----
-        ADD NOTES
         """
         if vertex_for_update in self.vertices:
             if check_if_coord(value):
@@ -334,11 +357,13 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.update_vertex_size(1, 20) # Sets vertex size to 20
+        >>> print(A.vertices_info)
+        [(1, {'position': None, 'size': 20, 'colour': 'b'}), (2, {'position': None, 'size': 4,
+        'colour': 'b'})]
 
-        Notes
-        -----
-        ADD NOTES
         """
         if vertex_for_update in self.vertices:
             if is_positive_int(value):
@@ -362,11 +387,13 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.update_vertex_size(1, "r") # Sets vertex colour to red
+        >>> print(A.vertices_info)
+        [(1, {'position': None, 'size': 20, 'colour': 'r'}), (2, {'position': None, 'size': 4,
+        'colour': 'b'})]
 
-        Notes
-        -----
-        ADD NOTES
         """
         if vertex_for_update in self.vertices:
             if is_supported_colour(value):
@@ -394,11 +421,16 @@ class Shape():
         
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Square(2, (1, 1), 45) # A square centred on (1, 1) with side length 2 
+        >>> A.add_vertex("Centre", (1, 1), 8, "r") # Red central vertex at (1, 1)
+        >>> print(A.get_vertex_info("position"))
+        {'0-0': (2.0, 2.0), '0-1': (0.0, 2.0), '0-2': (0.0, 0.0), '0-3': (2.0, 0.0), 'Centre': (1, 1)}
 
         Notes
         -----
-        ADD NOTES
+        This method returns a very usable collection of all vertices in the shape with their
+        associated desired property.
+
         """
         try:
             vertex_info = {}
@@ -470,7 +502,12 @@ class Shape():
         
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = Shape()
+        >>> for i in range(0, 6, 2): # Alternating blue and red vertices.
+        >>>     A.add_vertex(i)
+        >>>     A.add_vertex(i + 1, colour="r")
+        >>> A.get_vertex_colours()
+        {0: "b", 1: "r", 2: "b", 3: "r", 4: "b", 5: "r"}
 
         Notes
         -----
@@ -493,9 +530,9 @@ class Shape():
         weight : int > 0, Default = 1, optional
             Weight property to be utilisied upon drawing of the shape.
         colour : colour, Default = "k", optional
-            Colour property to be utilisied upon drawing of the shape. Colour can be chosen from
-            the options: black, "k"; red, "r"; green, "g"; blue, "b"; cyan, "c"; magenta, "m";
-            yellow, "y". 
+            Colour property to be utilisied upon drawing of the shape. Colour can be chosen
+            from the options: black - "k"; red - "r"; green - "g"; blue - "b"; cyan - "c";
+            magenta - "m"; yellow - "y". 
         
         Example
         -------
@@ -509,13 +546,14 @@ class Shape():
         Notes
         -----
         Edges are a connecting line between two vertices and are stored as a tuple of these two
-        defining vertex ends. You cannot have multiple edges between the same two vertices and thus
-        edges are uniquely defined by their vertex pair, this also means that (a, b) = (b, a). Edge
-        properies are weight and size. Weight references the 'thickness' of the edge line and colour
-        is self-explanatory. These properties utilised in the drawing of shapes. 
+        defining vertices. You cannot have multiple edges between the same two vertices and
+        thus edges are uniquely defined by their vertex pair, this also means that
+        (a, b) = (b, a). Edge properies are weight and size. Weight references the 'thickness'
+        of the edge line and colour is self-explanatory. These properties utilised in the
+        drawing of shapes. 
 
-        Vertices not pre-exsiting within the shape are automatically generated and added with no 
-        position and default size and colour.
+        Vertices not pre-exsiting within the shape are automatically generated and added with
+        no position and default size and colour.
         """
         # Checks if edge (in either direction) pre-exists
         if (vertex_one, vertex_two) not in self:
@@ -547,23 +585,30 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.update_edge(1, "colour", "r") # Sets edge colour to red
+        >>> print(A.edges_info)
 
         Notes
         -----
-        ADD NOTES
+        ADD NOTEs checkekksks
         """
         # Checks existence of edge in shape
-        if edge_for_update in self:
-            # Method selector
-            try:
-                method_name = "update_edge_" + prop
-                method = getattr(self, method_name)
-                method(edge_for_update, value)
-            except AttributeError:
-                raise PolyLatNotProp(prop)
+        if edge_for_update == "a":
+            print("test")
+            if edge_for_update in self:
+                # Method selector
+                try:
+                    method_name = "update_edge_" + prop
+                    method = getattr(self, method_name)
+                    method(edge_for_update, value)
+                except AttributeError:
+                    raise PolyLatNotProp(prop)
+            else:
+                raise PolyLatError(f"'{edge_for_update}' does not exist.")
         else:
-            raise PolyLatError(f"'{edge_for_update}' does not exist.")
+            raise PolyLatError(f"{edge_for_update} is not an edge.")
 
     def update_edge_weight(self, edge_for_update, value):
         """
@@ -783,7 +828,6 @@ class Shape():
                 return self.get_edge_vectors()[e]
         raise PolyLatNotExist(edge)
 
-
     def generate_shape(self, vertex_pos, shape_name, vectors):
         """
         Generates a named shape from a series of edge vectors staring at a given point.
@@ -791,7 +835,7 @@ class Shape():
         Parameters
         ----------
         vertex_pos : (x, y) - 2D Cartesian Coordinate
-            Start position for the initial vertex in the polygon.
+            Start position for the initial vertex in the shape.
         shape_name : string, int, or float
             This is the overiding shape name dictating all the vertex names within the shape.
             Vertex names are of the form; 'shape_name-k', where k is number of the vertex.
@@ -829,6 +873,39 @@ class Shape():
         for e in range(len(vectors)):
             if (edge_list[e], edge_list[e + 1]) not in self:
                 self.add_edge(edge_list[e], edge_list[e + 1])
+        
+    def generate_from_vectors(self, start_pos, vectors):
+        """
+        Generates and returns lattice type object of the current polygon located according to given
+        vectors.
+
+        Parameters
+        ----------
+        start_pos : (x, y) - 2D Cartesian Coordinate
+            Start position for the initial vertex in the shape.
+        vectors : list
+            List of vectors to describe positions for the current shape to be drawn in.
+        
+        Returns
+        -------
+        lattice : Lattice
+            Lattice object of the current shape drawn in position described by the input vectors.
+
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        ADD NOTES
+        """
+        lattice = Lattice()
+        edge_vec = list(self.get_edge_vectors().values())
+        lattice.generate_shape(start_pos, "0", edge_vec)
+        for i in range(len(vectors)):
+            start_pos = add_vectors(start_pos, vectors[i])
+            lattice.generate_shape(start_pos, str(i + 1), edge_vec)
+        return lattice
     
     def draw_shape(self):
         """
@@ -846,7 +923,6 @@ class Shape():
         # Adds edges to figure
         vertex_positions = self.get_vertex_positions()
         for edge in self.edges_info:
-            name = (edge[0], edge[1])
             pos1 = vertex_positions[edge[0]]
             pos2 = vertex_positions[edge[1]]
             weight = edge[2]["weight"]
@@ -854,7 +930,6 @@ class Shape():
             ax.plot([pos1[0], pos2[0]], [pos1[1], pos2[1]], color=colour, lw=weight)  
         # Adds vertices to figure
         for vertex in self.vertices_info:
-            name = vertex[0]
             pos = vertex[1]["position"]
             size = vertex[1]["size"]
             col = vertex[1]["colour"] + "o"
@@ -958,419 +1033,6 @@ class Polygon(Shape):
         To be defined in child classes.
         """
 
-
-class RegularPolygon(Polygon):
-    """
-    Regular polygons are defined to be polygons with all edges having equal length and all
-    internal angles the same.
-
-    Attributes
-    ----------
-    .int_angle : The angle between edges within the shape.
-    .theta : The angle from one radii, from the centre to each vertex, to the next.
-    .radius : The length from the centre to any vertex in a regular polygon.
-    .radius_vector : The vector from the centre to the initial vertex, with regard to rotation.
-
-    Example
-    -------
-    >>> ADD EXAMPLE
-
-    Notes
-    -----    
-    Regular Polygons are defined by their number of sides and edge length. When
-    initialised, RegularPolygon implements both these parameters along with a user
-    defined centre for the shape and an angle of rotation. When called regular polygons
-    are automatically generated with help from some variables detailed below;
-
-    The polygons of this type can thus be defined simply by their number of sides and edge
-    length. Along with a given centre and a rotation all further features of these shapes can
-    be found through private class methods.
-    """
-    def __init__(self, sides: int, edge_length, centre, rotation):
-        """
-        Initialises a Reular Polygon object.
-
-        Parameters
-        ----------
-        sides : int > 3
-            The number of sides for the regular polygon (Attribute).
-        edge_length : float > 0,
-            Edge length for all edges of the shape (Attribute).
-        centre : (x, y) - 2D Cartesian Coordinate
-            Centre point for the shape. For regular polygons this is possible as the uniform nature
-            of the shape results in an equal radius to each vertex in the polygon (Attribute).
-        rotation : angle
-            The angle, in degrees, to rotate the shape around the centre anti-clockwise. This value
-            is cyclic with period 360 degrees (Attribute).
-        
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
-        """
-        self.sides = sides
-        self.edge_length = edge_length
-        self.centre = centre
-        self.rotation = rotation
-
-        # Error Handling for input attributes.
-        if self.sides < 3:
-            raise ValueError(f"Argument 'sides' = {self.sides}. A regular polygon have at least 3 sides.")
-        elif self.edge_length < 0:
-            raise ValueError("Argument 'edge_length' = {self.edge_length}. Edges cannot be of negative length.".format(self=self))
-        elif not check_if_coord(self.centre):
-            raise PolyLatNotCart(self.centre)
-
-        super().__init__()
-
-        # Set Radius related attributes
-        self.int_angle = round(((sides - 2)*180)/sides, 3)
-        self.theta = 180 - self.int_angle
-        self.radius = round((edge_length)/(2*sin(radians(self.theta/2))), 3)
-        self.radius_vec = change_to_cart_vector((self.radius, rotation))
-
-        # Generate polygon
-        polygon_vectors = self.generate_polygon_vectors()
-        start_pos = add_vectors(centre, self.radius_vec)
-        self.generate_shape(start_pos, 0, polygon_vectors)
-
-    
-    def generate_polygon_vectors(self):
-        """
-        Generates and returns the edge vectors for a regular polygon.
-            
-        Returns
-        -------
-        edge_vectors : list
-            List with edge vectors as values.
-
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
-        """
-        edge_vectors = []
-        for i in range(self.sides):
-            angle = i*self.theta + (180 - (self.int_angle/2)) + self.rotation
-            edge_vectors.append(change_to_cart_vector((self.edge_length, angle)))
-        return edge_vectors
-    
-    def get_lattice_state(self):
-        """
-        Returns True if lattice can be generated from current regular polygon. False otherwise.
-
-        Returns
-        -------
-        boolean
-            Returns True if lattice can be generated from current regular polygon. False if not. 
-
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
-        """
-        lattice_test = 360/self.int_angle
-        return lattice_test.is_integer()
-    
-    
-
-################## PRESETs for REGULAR POLYGONs ######################
-
-
-class EquilateralTriangle(RegularPolygon):
-    """
-    PRESET SHAPE: EquilateralTriangle
-
-    Equilateral triangles are 3 sided polygons with equal edge length and internal angle of 60
-    degrees. The default Equilateral Triangle is generated "pointing" along the x-axis in the
-    positive direction centred at the origin (0, 0). 
-    """
-    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
-        """
-        Equilateral Triangles are initialised as Regular Polygons with 3 sides.
-
-        Parameters
-        ----------
-        edge_length : float > 0, Default = 1, optional
-            The deired edge length for the triangles.
-        centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
-            Centre position for the triangle.
-        rotation : angle, Default = 0, optional
-            The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
-        
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
-        """
-        super().__init__(3, edge_length, centre, rotation)
-
-    def generate_lattice_circular(self, layers: int):
-        """
-        Generates and returns the circular lattice for Equilateral Triangles.
-
-        Parameters
-        ----------
-        layers : int > 0
-            The number of desired layers in the lattice.
-
-        Returns
-        -------
-        lattice : Lattice
-            Lattice object from 
-
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
-        """
-        polar_vectors = []
-        for i in range(2*self.sides):
-            polar_vectors.append((self.edge_length, 30 + (i + 1)*self.int_angle + self.rotation))
-        chg_vectors = change_to_cart_list(polar_vectors)
-
-        triangle_one = []
-        for i in range(self.sides):
-            triangle_one.append(chg_vectors[2*i + 1])
-        triangle_two = []
-        for i in range(self.sides):
-            triangle_two.append(chg_vectors[len(chg_vectors) - (2*i + 1)])
-        
-        lattice = Lattice(layers)
-        shape = 0
-        origin_vertex = add_vectors(self.centre, self.radius_vec)
-        for layer in range(layers):
-            if layer == 0:
-                lattice.generate_shape(origin_vertex, shape, triangle_one)
-            else:
-                if layer % 2 == 0: # Odd Layers
-                    origin_vertex = add_vectors(origin_vertex, chg_vectors[5])
-                    origin_vertex = add_vectors(origin_vertex, chg_vectors[4])
-                    vertex_pos = origin_vertex
-                    for i in range(3):
-                        for _ in range(int(layer/2)):
-                            shape += 1
-                            lattice.generate_shape(vertex_pos, shape, triangle_one)
-                            vertex_pos = add_vectors(vertex_pos, chg_vectors[2*i])
-                        for _ in range(int(layer/2)):
-                            shape += 1
-                            lattice.generate_shape(vertex_pos, shape, triangle_one)
-                            vertex_pos = add_vectors(vertex_pos, chg_vectors[(2*i) + 1])    
-                else: # Even Layers
-                    origin_vertex = add_vectors(origin_vertex, chg_vectors[2])
-                    vertex_pos = origin_vertex
-                    for i in range(3):
-                        for _ in range(int((layer + 1)/2)):
-                            shape += 1
-                            lattice.generate_shape(vertex_pos, shape, triangle_two)
-                            vertex_pos = add_vectors(vertex_pos, chg_vectors[2*i])
-                        for _ in range(int((layer + 1)/2) - 1):
-                            shape += 1
-                            lattice.generate_shape(vertex_pos, shape, triangle_two)
-                            vertex_pos = add_vectors(vertex_pos, chg_vectors[(2*i) + 1])
-        return lattice
-
-
-class Square(RegularPolygon):
-    """
-    PRESET SHAPE: Square
-
-    Squares are 4 sided polygons with internal angles of 90 degrees. The default square is positioned with
-    its edges at 45 degree angles to the x-axis, centred at the origin.
-    """
-    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
-        """
-        Squares are initialised as Regular Polygons with 4 sides.
-
-        Parameters
-        ----------
-        edge_length : float > 0, Default = 1, optional
-            The deired edge length for the triangles.
-        centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
-            Centre position for the triangle.
-        rotation : angle, Default = 0, optional
-            The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
-        
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
-        """
-        super().__init__(4, edge_length, centre, rotation)
-
-    def generate_lattice_circular(self, layers: int):
-        """
-        Generates and returns the circular lattice for Squares.
-
-        Parameters
-        ----------
-        layers : int > 0
-            The number of desired layers in the lattice.
-
-        Returns
-        -------
-        lattice : Lattice
-            Lattice object from 
-
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
-        """
-        chg_vectors = list(self.get_edge_vectors().values())
-
-        lattice = Lattice(layers)
-
-        even_numbers = list(range(0, 2*layers, 2))
-        shape = 0
-        for layer in range(layers):
-            radius_vec = (round((layer*2*self.radius_vec[0]) + self.radius_vec[0], 3), round((layer*2*self.radius_vec[1]) + self.radius_vec[1], 3))
-            start_vertex_pos = add_vectors(self.centre, radius_vec)
-            if layer == 0:
-                lattice.generate_shape(start_vertex_pos, shape, chg_vectors)
-                shape += 1
-            else:
-                for i in range(self.sides):
-                    for _ in range(even_numbers[layer]):
-                        lattice.generate_shape(start_vertex_pos, shape, chg_vectors)
-                        start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[i])
-                        shape += 1
-        return lattice
-
-
-class Pentagon(RegularPolygon):
-    """
-    IMPLEMENT DOCUMENTATION
-    """
-    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        super().__init__(5, edge_length, centre, rotation)
-
-
-class Hexagon(RegularPolygon):
-    """
-    PRESET SHAPE: Hexagon
-
-    Regular hexagons are 6 sided polygons with internal angles of 120 degrees. The default Hexagon is positioned with
-    its "top" and "bottom" edges parallel to the x-axis, centred at the origin.
-    """
-    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
-        """
-        Hexagons are initialised as Regular Polygons with 6 sides.
-
-        Parameters
-        ----------
-        edge_length : float > 0, Default = 1, optional
-            The deired edge length for the triangles.
-        centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
-            Centre position for the triangle.
-        rotation : angle, Default = 0, optional
-            The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
-        
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
-        """
-        super().__init__(6, edge_length, centre, rotation)
-    
-    def generate_lattice_circular(self, layers: int):
-        """
-        Generates and returns the circular lattice for Hexagons.
-
-        Parameters
-        ----------
-        layers : int > 0
-            The number of desired layers in the lattice.
-
-        Returns
-        -------
-        lattice : Lattice
-            Lattice object from 
-
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
-        """
-        edgeLengthPlus = 1.5*self.edge_length
-        halfHexHeight = round(sqrt(0.75*((self.edge_length)**2)), 2)
-        vector_length = round(sqrt(edgeLengthPlus**2 + halfHexHeight**2), 2)
-        polar_vectors = []
-        for i in range(self.sides):
-            polar_vectors.append((vector_length, i*(self.theta) + self.theta/2 + self.rotation))
-        chg_vectors = change_to_cart_list(polar_vectors)
-
-        lattice = Lattice(layers)
-        polygon_vectors = list(self.get_edge_vectors().values())
-
-        shape = 1
-        for layer in range(layers):
-            if layer == 0:
-                start_vertex_pos = add_vectors(self.centre, self.radius_vec)
-                lattice.generate_shape(start_vertex_pos, 0, polygon_vectors)
-            else:
-                start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[4])
-                lattice.generate_shape(start_vertex_pos, shape, polygon_vectors)
-                for i in range(self.sides):
-                    for _ in range(layer):
-                        shape += 1
-                        start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[i])
-                        lattice.generate_shape(start_vertex_pos, shape, polygon_vectors)
-        return lattice
-
-
-class Septagon(RegularPolygon):
-    """
-    IMPLEMENT DOCUMENTATION
-    """
-    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        super().__init__(7, edge_length, centre, rotation)
-
-
-class Octagon(RegularPolygon):
-    """
-    IMPLEMENT DOCUMENTATION
-    """
-    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
-        """
-        IMPLEMENT DOCUMENTATION
-        """
-        super().__init__(8, edge_length, centre, rotation)
-
-
 ############################################################################################
 
         
@@ -1378,19 +1040,45 @@ class Lattice(Shape):
     """
     IMPLEMENT DOCUMENTATION
     """
-    def __init__(self, layers):
+    def __init__(self):
         """
         IMPLEMENT DOCUMENTATION
         """
         super().__init__()
-        self.layers = layers
     
+    def __set_lattice_type(self, lattice_type):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        # Stacked, circular, custom...
+        self.lattice_type = lattice_type 
+
     def get_shape_num(self):
         """
         IMPLEMENT DOCUMENTATION
         """
-        sides = len(self.edges)
-        if sides % 3 == 0:
-            return int(1 + sides*(self.layers*(self.layers - 1)/2))
-        elif sides % 4 == 0:
-            return int((1 + 2*(self.layers - 1))**2)
+        ## If lattice is stacked the shape num is (rows x columns)
+        
+
+        ## Circular lattice shape nums...
+        # sides = len(self.edges)
+        # if sides % 3 == 0:
+        #     return int(1 + sides*(self.layers*(self.layers - 1)/2))
+        # elif sides % 4 == 0:
+        #     return int((1 + 2*(self.layers - 1))**2)
+
+    def get_shape_sides(self):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        ## This returns the No. of sides of the shpe in the lattice....
+        edge_vecs = list(self.get_edge_vectors().values())
+        initial_vertex_pos = self.vertices_info[0][1]["position"]
+        i = 0
+        pos = initial_vertex_pos
+        for vec in edge_vecs:
+            pos = add_vectors(pos, vec)
+            i += 1
+            if pos == initial_vertex_pos:
+                break
+        return i
