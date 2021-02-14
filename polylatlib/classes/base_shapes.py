@@ -899,7 +899,7 @@ class Shape():
         -----
         ADD NOTES
         """
-        lattice = Lattice(1)
+        lattice = Lattice()
         edge_vec = list(self.get_edge_vectors().values())
         lattice.generate_shape(start_pos, "0", edge_vec)
         for i in range(len(vectors)):
@@ -1040,19 +1040,45 @@ class Lattice(Shape):
     """
     IMPLEMENT DOCUMENTATION
     """
-    def __init__(self, layers):
+    def __init__(self):
         """
         IMPLEMENT DOCUMENTATION
         """
         super().__init__()
-        self.layers = layers
     
+    def __set_lattice_type(self, lattice_type):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        # Stacked, circular, custom...
+        self.lattice_type = lattice_type 
+
     def get_shape_num(self):
         """
         IMPLEMENT DOCUMENTATION
         """
-        sides = len(self.edges)
-        if sides % 3 == 0:
-            return int(1 + sides*(self.layers*(self.layers - 1)/2))
-        elif sides % 4 == 0:
-            return int((1 + 2*(self.layers - 1))**2)
+        ## If lattice is stacked the shape num is (rows x columns)
+        
+
+        ## Circular lattice shape nums...
+        # sides = len(self.edges)
+        # if sides % 3 == 0:
+        #     return int(1 + sides*(self.layers*(self.layers - 1)/2))
+        # elif sides % 4 == 0:
+        #     return int((1 + 2*(self.layers - 1))**2)
+
+    def get_shape_sides(self):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        ## This returns the No. of sides of the shpe in the lattice....
+        edge_vecs = list(self.get_edge_vectors().values())
+        initial_vertex_pos = self.vertices_info[0][1]["position"]
+        i = 0
+        pos = initial_vertex_pos
+        for vec in edge_vecs:
+            pos = add_vectors(pos, vec)
+            i += 1
+            if pos == initial_vertex_pos:
+                break
+        return i
