@@ -4,7 +4,7 @@ setup(
     name="polylatlib",
     url = "https://github.com/RexGreenway/polylatlib",
     packages=["polylatlib"],
-    version="1.0.0",
+    version="1.0.2",
     description="Python library for the generation of shapes and their lattices",
     author="Thomas Rex Greenway",
 )
