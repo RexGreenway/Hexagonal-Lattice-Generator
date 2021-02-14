@@ -206,7 +206,7 @@ class EquilateralTriangle(RegularPolygon):
         for i in range(self.sides):
             triangle_two.append(chg_vectors[len(chg_vectors) - (2*i + 1)])
 
-        lattice = Lattice(layers)
+        lattice = Lattice()
         shape = 0
         origin_vertex = add_vectors(self.centre, self.radius_vec)
         for layer in range(layers):
@@ -253,27 +253,27 @@ class EquilateralTriangle(RegularPolygon):
         move_row = [edge_vec_1[0], edge_vec_1[2]]
         move_col = [edge_vec_1[2], (-edge_vec_1[0][0], -edge_vec_1[0][1])]
 
-        lattice = Lattice(1)
+        lattice = Lattice()
         origin_vertex = add_vectors(self.centre, self.radius_vec)
         for i in range(rows):
             col_pos = origin_vertex
             if i % 2 == 0:
                 for j in range(columns):
                     if j % 2 == 0:
-                        lattice.generate_shape(col_pos, str(i) + str(j), edge_vec[(i % 2)])
+                        lattice.generate_shape(col_pos, str(i) + "." + str(j), edge_vec[(i % 2)])
                     else:
-                        lattice.generate_shape(col_pos, str(i) + str(j), edge_vec[(i % 2) - 1])
+                        lattice.generate_shape(col_pos, str(i) + "." + str(j), edge_vec[(i % 2) - 1])
                         col_pos = add_vectors(col_pos, move_col[0])
                         col_pos = add_vectors(col_pos, move_col[1])
                 origin_vertex = add_vectors(origin_vertex, move_row[(i % 2)])
             else:
                 for j in range(columns):
                     if j % 2 == 0:
-                        lattice.generate_shape(col_pos, str(i) + str(j), edge_vec[(i % 2)])
+                        lattice.generate_shape(col_pos, str(i) + "." + str(j), edge_vec[(i % 2)])
                         col_pos = add_vectors(col_pos, move_col[0])
                         col_pos = add_vectors(col_pos, move_col[1])
                     else:
-                        lattice.generate_shape(col_pos, str(i) + str(j), edge_vec[(i % 2) - 1])
+                        lattice.generate_shape(col_pos, str(i) + "." + str(j), edge_vec[(i % 2) - 1])
                 origin_vertex = add_vectors(origin_vertex, move_row[(i % 2)])
         return lattice
 
@@ -284,7 +284,7 @@ class Square(RegularPolygon):
     Squares are 4 sided polygons with internal angles of 90 degrees. The default square is positioned with
     its edges at 45 degree angles to the x-axis, centred at the origin.
     """
-    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
+    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 45):
         """
         Squares are initialised as Regular Polygons with 4 sides.
 
@@ -294,7 +294,7 @@ class Square(RegularPolygon):
             The deired edge length for the triangles.
         centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
             Centre position for the triangle.
-        rotation : angle, Default = 0, optional
+        rotation : angle, Default = 45, optional
             The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
 
         Example
@@ -303,7 +303,8 @@ class Square(RegularPolygon):
 
         Notes
         -----
-        ADD NOTES
+        The default orientation of Squares is with its edges parallel to the axes. This means that
+        unlike other preset regular polygons the initial vertex of the shape does not lie upon the x-axis. 
         """
         super().__init__(4, edge_length, centre, rotation)
 
@@ -331,7 +332,7 @@ class Square(RegularPolygon):
         """
         chg_vectors = list(self.get_edge_vectors().values())
 
-        lattice = Lattice(layers)
+        lattice = Lattice()
 
         even_numbers = list(range(0, 2*layers, 2))
         shape = 0
@@ -352,9 +353,41 @@ class Square(RegularPolygon):
     def generate_lattice_stacked(self, rows, columns):
         """
         Generates and returns the stacked lattice for the Squares.
+        
+        Parameters
+        ----------
+        rows : int > 0
+            Number of rows in the stacked lattice.
+        columns : int > 0
+            Number of columns in the stacked lattice.
 
+        Returns
+        -------
+        lattice : Lattice
+            Stacked lattice of the current polygon.
+        
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        Note that the idea of "stacked" specifically refers to the default position of the shape. For
+        squares this results in a (row x column) grid formation with the generating square (current
+        polygon) is situated in the bottom left corner.
         """
-        pass
+        edge_vec = list(self.get_edge_vectors().values())
+        move_row = edge_vec[3]
+        move_col = edge_vec[2]
+        lattice  = Lattice()
+        start_pos = add_vectors(self.centre, self.radius_vec)
+        for i in range(rows):
+            vertex_pos = start_pos
+            for j in range(columns):
+                lattice.generate_shape(vertex_pos, str(i) + "." + str(j), edge_vec)
+                vertex_pos = add_vectors(vertex_pos, move_col)
+            start_pos = add_vectors(start_pos, move_row)
+        return lattice
 
 class Pentagon(RegularPolygon):
     """
@@ -374,7 +407,7 @@ class Hexagon(RegularPolygon):
     Regular hexagons are 6 sided polygons with internal angles of 120 degrees. The default Hexagon is positioned with
     its "top" and "bottom" edges parallel to the x-axis, centred at the origin.
     """
-    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
+    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 30):
         """
         Hexagons are initialised as Regular Polygons with 6 sides.
 
@@ -384,7 +417,7 @@ class Hexagon(RegularPolygon):
             The deired edge length for the triangles.
         centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
             Centre position for the triangle.
-        rotation : angle, Default = 0, optional
+        rotation : angle, Default = 30, optional
             The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
 
         Example
@@ -393,7 +426,9 @@ class Hexagon(RegularPolygon):
 
         Notes
         -----
-        ADD NOTES
+        Similar to the Square preset, the default orientation of hexagons is with its "vertical "edges
+        parallel to the y-axis. This means that unlike other preset regular polygons that the initial
+        vertex of the shape does not lie upon the x-axis.
         """
         super().__init__(6, edge_length, centre, rotation)
 
@@ -427,7 +462,7 @@ class Hexagon(RegularPolygon):
             polar_vectors.append((vector_length, i*(self.theta) + self.theta/2 + self.rotation))
         chg_vectors = change_to_cart_list(polar_vectors)
 
-        lattice = Lattice(layers)
+        lattice = Lattice()
         polygon_vectors = list(self.get_edge_vectors().values())
 
         shape = 1
@@ -449,8 +484,42 @@ class Hexagon(RegularPolygon):
         """
         Generates and returns the stacked lattice for the Hexagons.
 
+        Parameters
+        ----------
+        rows : int > 0
+            Number of rows in the stacked lattice.
+        columns : int > 0
+            Number of columns in the stacked lattice.
+
+        Returns
+        -------
+        lattice : Lattice
+            Stacked lattice of the current polygon.
+        
+        Example
+        -------
+        >>> ADD EXAMPLE
+
+        Notes
+        -----
+        Note that the idea of "stacked" specifically refers to the default position of the shape.
         """
-        pass
+        edge_vec = list(self.get_edge_vectors().values())
+        print(edge_vec)
+        edgeLengthPlus = 1.5*self.edge_length
+        halfHexHeight = round(sqrt(0.75*((self.edge_length)**2)), 2)
+        vector_length = round(sqrt(edgeLengthPlus**2 + halfHexHeight**2), 2)
+        move_row = change_to_cart_vector((vector_length, 30 + self.rotation))
+        move_col = change_to_cart_vector((vector_length, self.rotation - 30))
+        lattice  = Lattice()
+        start_pos = add_vectors(self.centre, self.radius_vec)
+        for i in range(rows):
+            vertex_pos = start_pos
+            for j in range(columns):
+                lattice.generate_shape(vertex_pos, str(i) + "." + str(j), edge_vec)
+                vertex_pos = add_vectors(vertex_pos, move_col)
+            start_pos = add_vectors(start_pos, move_row)
+        return lattice
 
 class Septagon(RegularPolygon):
     """
