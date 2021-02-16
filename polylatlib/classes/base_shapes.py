@@ -1057,15 +1057,9 @@ class Lattice(Shape):
         """
         IMPLEMENT DOCUMENTATION
         """
-        ## If lattice is stacked the shape num is (rows x columns)
-        
-
-        ## Circular lattice shape nums...
-        # sides = len(self.edges)
-        # if sides % 3 == 0:
-        #     return int(1 + sides*(self.layers*(self.layers - 1)/2))
-        # elif sides % 4 == 0:
-        #     return int((1 + 2*(self.layers - 1))**2)
+        ## Using Euler's Formula: v - e + f = 2 (f includes outside face)
+        # Only works if connected planar graph ---> implement upon drawing?.
+        return 1 - len(self.vertices) + len(self)
 
     def get_shape_sides(self):
         """
