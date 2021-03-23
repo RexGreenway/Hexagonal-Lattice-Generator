@@ -4,6 +4,9 @@ Classes
 **********
 Base Shape classes for PolyLatLib.
 
+This file contains the bases shape classes for all shape objects in PolyLatLib, dictating their base
+structure and behaviour.
+
 """
 
 import abc
@@ -239,11 +242,6 @@ class Shape():
         """
         Updates the desired property for a given item, either a vertex or an edge.
 
-        See Also
-        --------
-        update_vertex, update_vertex_position, update_vertex_size, update_vertex_colour,
-        update_edge, update_edge_weight, update_edge_colour
-
         Parameters
         ----------
         item_for_update : vertex or edge
@@ -267,6 +265,12 @@ class Shape():
         -----
         This method dynamically detects if the item entered is an edge or a vertex and then
         proceeds to call the specific update method as nessecary.
+
+        See Also
+        --------
+        update_edge()
+        update_vertex()
+
         """
         if item_for_update in self:
             # Check if item is edge
@@ -295,11 +299,17 @@ class Shape():
         Example
         -------
         >>> A = pl.Shape()
-        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.add_edge(1, 2, 2, "c")                    # Adds 2 vertices and an edge
         >>> A.update_vertex(1, "position", (1, 1))
         >>> print(A.vertices_info)
         [(1, {'position': (1, 1), 'size': 4, 'colour': 'b'}), (2, {'position': None, 'size': 4,
         'colour': 'b'})]
+
+        See Also
+        --------
+        update_vertex_position()
+        update_vertex_size()
+        update_vertex_colour()
 
         """
         # Checks vertex existence
@@ -328,7 +338,7 @@ class Shape():
         Example
         -------
         >>> A = pl.Shape()
-        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
+        >>> A.add_edge(1, 2, 2, "c")                # Adds 2 vertices and an edge
         >>> A.update_vertex_position(1, (1, 1))
         >>> print(A.vertices_info)
         [(1, {'position': (1, 1), 'size': 4, 'colour': 'b'}), (2, {'position': None, 'size': 4,
@@ -358,8 +368,8 @@ class Shape():
         Example
         -------
         >>> A = pl.Shape()
-        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
-        >>> A.update_vertex_size(1, 20) # Sets vertex size to 20
+        >>> A.add_edge(1, 2, 2, "c")                # Adds 2 vertices and an edge
+        >>> A.update_vertex_size(1, 20)             # Sets vertex size to 20
         >>> print(A.vertices_info)
         [(1, {'position': None, 'size': 20, 'colour': 'b'}), (2, {'position': None, 'size': 4,
         'colour': 'b'})]
@@ -388,8 +398,8 @@ class Shape():
         Example
         -------
         >>> A = pl.Shape()
-        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
-        >>> A.update_vertex_size(1, "r") # Sets vertex colour to red
+        >>> A.add_edge(1, 2, 2, "c")                # Adds 2 vertices and an edge
+        >>> A.update_vertex_size(1, "r")            # Sets vertex colour to red
         >>> print(A.vertices_info)
         [(1, {'position': None, 'size': 20, 'colour': 'r'}), (2, {'position': None, 'size': 4,
         'colour': 'b'})]
@@ -421,8 +431,8 @@ class Shape():
         
         Example
         -------
-        >>> A = pl.Square(2, (1, 1), 45) # A square centred on (1, 1) with side length 2 
-        >>> A.add_vertex("Centre", (1, 1), 8, "r") # Red central vertex at (1, 1)
+        >>> A = pl.Square(2, (1, 1), 45)                    # A square centred on (1, 1) with side length 2 
+        >>> A.add_vertex("Centre", (1, 1), 8, "r")          # Red central vertex at (1, 1)
         >>> print(A.get_vertex_info("position"))
         {'0-0': (2.0, 2.0), '0-1': (0.0, 2.0), '0-2': (0.0, 0.0), '0-3': (2.0, 0.0), 'Centre': (1, 1)}
 
@@ -430,6 +440,12 @@ class Shape():
         -----
         This method returns a very usable collection of all vertices in the shape with their
         associated desired property.
+
+        See Also
+        --------
+        get_vertex_positions()
+        get_vertex_sizes()
+        get_vertex_colours()
 
         """
         try:
@@ -458,10 +474,6 @@ class Shape():
         >>> A.get_vertex_positions()
         {0: (1, 2), 1: (2, 3), 2: (3, 4), 3: (4, 5), 4: (5, 6)}
 
-        Notes
-        -----
-        This method returns a very usable collection of all vertices in the shape with their
-        associated position.
         """
         return self.get_vertex_info("position")
 
@@ -483,10 +495,6 @@ class Shape():
         >>> A.get_vertex_sizes()
         {0: 10, 1: 20, 2: 30, 3: 40, 4: 50}
 
-        Notes
-        -----
-        This method returns a very usable collection of all vertices in the shape with their
-        associated size.
         """
         return self.get_vertex_info("size")
     
@@ -503,16 +511,12 @@ class Shape():
         Example
         -------
         >>> A = Shape()
-        >>> for i in range(0, 6, 2): # Alternating blue and red vertices.
+        >>> for i in range(0, 6, 2):                    # Alternating blue and red vertices.
         >>>     A.add_vertex(i)
         >>>     A.add_vertex(i + 1, colour="r")
         >>> A.get_vertex_colours()
         {0: "b", 1: "r", 2: "b", 3: "r", 4: "b", 5: "r"}
 
-        Notes
-        -----
-        This method returns a very usable collection of all vertices in the shape with their
-        associated colour.
         """
         return self.get_vertex_info("colour")
 
@@ -537,9 +541,9 @@ class Shape():
         Example
         -------
         >>> A = Shape()
-        >>> A.add_edge(1, 2) # Adding edge between to new vetrices, 1, and 2.
-        >>> A.add_edge("Hello", "World", 3) # An edge between 'Hello' and 'World' with weight 3.
-        >>> A.add_edge("Hello", "xmpl", colour = "r") # Establishing edge between exsiting vertex "Hello" and new vertex "xmpl".
+        >>> A.add_edge(1, 2)                                # Adding edge between to new vetrices, 1, and 2.
+        >>> A.add_edge("Hello", "World", 3)                 # An edge between 'Hello' and 'World' with weight 3.
+        >>> A.add_edge("Hello", "xmpl", colour = "r")       # Establishing edge between exsiting vertex "Hello" and new vertex "xmpl".
         >>> print(A.edges)
         [(1, 2), ("Hello", "World"), ("Hello", "xmpl")]
 
@@ -586,17 +590,23 @@ class Shape():
         Example
         -------
         >>> A = pl.Shape()
-        >>> A.add_edge(1, 2, 2, "c") # Adds 2 vertices and an edge
-        >>> A.update_edge(1, "colour", "r") # Sets edge colour to red
+        >>> A.add_edge(1, 2, 2, "c")                # Adds 2 vertices and an edge
+        >>> A.update_edge((1, 2), "colour", "r")    # Sets edge colour to red
         >>> print(A.edges_info)
+        [(1, 2, {'weight': 2, 'colour': 'r'})]
 
         Notes
         -----
-        ADD NOTEs checkekksks
+        This method perfroms the relevant update method depending upon the given edge.
+
+        See Also
+        --------
+        update_edge_weight()
+        update_edge_colour()
+
         """
         # Checks existence of edge in shape
-        if edge_for_update == "a":
-            print("test")
+        if type(edge_for_update) == tuple and len(edge_for_update) == 2:
             if edge_for_update in self:
                 # Method selector
                 try:
@@ -623,11 +633,12 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c")            # Adds 2 vertices and an edge
+        >>> A.update_edge_weight((1, 2), 4)     # Sets edge weight to 4
+        >>> print(A.edges_info)
+        [(1, 2, {'weight': 4, 'colour': 'r'})]
 
-        Notes
-        -----
-        ADD NOTES
         """
         if is_positive_int(value):
             if edge_for_update in self.edges:
@@ -650,14 +661,17 @@ class Shape():
             A prexisting edge in the shape to be updated.
         value: colour
             New value to be inserted into edge information dictionary for colour.
+            Colour can be chosen from: black - "k"; red - "r"; green - "g";
+            blue - "b"; cyan - "c"; magenta - "m"; yellow - "y".
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Shape()
+        >>> A.add_edge(1, 2, 2, "c")                # Adds 2 vertices and an edge
+        >>> A.update_edge_colour((1, 2), "y")       # Sets edge colour to yellow
+        >>> print(A.edges_info)
+        [(1, 2, {'weight': 2, 'colour': 'y'})]
 
-        Notes
-        -----
-        ADD NOTES
         """
         if is_supported_colour(value):
             if edge_for_update in self.edges:
@@ -687,11 +701,20 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> A = pl.Square()
+        >>> A.update_edge_colour(("0-1", "0-2"), "y")
+        >>> print(A.get_edge_info("colour"))
+        {('0-0', '0-1'): 'k', ('0-1', '0-2'): 'y', ('0-2', '0-3'): 'k', ('0-3', '0-0'): 'k'}
 
         Notes
         -----
-        ADD NOTES
+        This method reurns a very usable collection of all edges in the shape with their associated
+        desired property.
+
+        See Also
+        --------
+        get_edge_weights()
+        get_edge_colours()
 
         """
         try:
@@ -720,10 +743,6 @@ class Shape():
         >>> A.get_edge_weights()
         {(0, 1): 10, (1, 2): 20, (2, 3): 30, (3, 4): 40, (4, 5): 50}
 
-        Notes
-        -----
-        This method returns a very usable collection of all edges in the shape with their
-        associated weight.
         """
         return self.get_edge_info("weight")
     
@@ -745,10 +764,6 @@ class Shape():
         >>> A.get_vertex_colours()
         {(0, 1): "black", (1, 2): "red", (2, 3): "green", (3, 4): "blue", (4, 5): "yellow"}
 
-        Notes
-        -----
-        This method returns a very usable collection of all edges in the shape with their
-        associated colour.
         """
         return self.get_edge_info("colour")
 
@@ -783,6 +798,10 @@ class Shape():
         method to retrieve this information as vectors used for generation in child classes can
         be overwritten in some circumstances (i.e generate polygon automatically closes the shape
         if input vectors do not do so).
+
+        See Also
+        --------
+        get_edge_vector()
         """
         edge_vectors = {}
         for edge in self.edges:
@@ -803,10 +822,6 @@ class Shape():
         -------
         vector : 2-tuple
             Vector from the first vertex in the edge to the second.
-
-        See Also
-        --------
-        get_edge_vectors
         
         Example
         -------
@@ -819,9 +834,9 @@ class Shape():
         >>> print(A.get_edge_vector((2, 1)))    # Note reversed vertices still works.
         (1, 3)
 
-        Notes
-        -----
-        ADD NOTES
+        See Also
+        --------
+        get_edge_vectors
         """
         for e in [edge, (edge[1], edge[0])]:
             if e in self.edges:
@@ -845,12 +860,17 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> vecs = [(0, 1), (1, 1), (-1, 2)]
+        >>> A = pl.Shape()
+        >>> A.generate_shape((0, 0), "Example", vecs)
+        >>> A.draw_shape()
+        <MatPlotLib drawing of shape graph>
 
         Notes
         -----
         This method checks for pre-existence of vertices before adding new ones, i.e we cannot
-        have multiple vetrices occupying the same position...
+        have multiple vetrices occupying the same position. This method does not close the shape
+        automatically.
         """
         edge_list = []
         for k in range(len(vectors) + 1):
@@ -876,8 +896,8 @@ class Shape():
         
     def generate_from_vectors(self, start_pos, vectors):
         """
-        Generates and returns lattice type object of the current polygon located according to given
-        vectors.
+        Generates and returns lattice type object of the current shape repeated with positions
+        according to given vectors.
 
         Parameters
         ----------
@@ -893,11 +913,23 @@ class Shape():
 
         Example
         -------
-        >>> ADD EXAMPLE
+        >>> shape_vec = [(0, 1), (1, 1), (-1, 2)]
+        >>> A = pl.Shape()
+        >>> A.generate_shape((0, 0), "Example", shape_vec)
+        >>> lat_vec = [(3, 3), (0, -2), (1, 1)]
+        >>> lat_A = A.generate_from_vectors((0, 0), lat_vec)
+        >>> lat_A.draw_shape()
+        <Matplotlib drawing of repeated shape lattice>
 
         Notes
         -----
-        ADD NOTES
+        This method takes the existing shape and creates a new Lattice object of repeated copies
+        of that shape. The number of copies present in the lattice is (num. of vectors) + 1.
+        This is because this method first generates the original shape in the starting position
+        given and proceeds to repeat the shape in positions dictated by the provided vectors.
+
+        This method also accounts for the preexistence of vertices in the shape.
+         
         """
         lattice = Lattice()
         edge_vec = list(self.get_edge_vectors().values())
@@ -907,9 +939,21 @@ class Shape():
             lattice.generate_shape(start_pos, str(i + 1), edge_vec)
         return lattice
     
-    def draw_shape(self):
+    def draw_shape(self, axis = "off"):
         """
-        IMPLEMENT
+        Draws the current shape using the MatPlotLib library.
+
+        Parameters
+        ----------
+        axis : "on" or "off" (Default "off")
+            Set as "on" to view x and y axis in plot. Set as "off" to view plot as blank
+            canvas.
+
+        Notes
+        -----
+        Uses the Matplotlib library to visualise the current shapem, accounting for vertex
+        properties (position, size, and colour) and edge properties (weight and colour).
+
         """
         try:
             import matplotlib.pyplot as plt
@@ -934,7 +978,7 @@ class Shape():
             size = vertex[1]["size"]
             col = vertex[1]["colour"] + "o"
             ax.plot([pos[0]], [pos[1]], col, markersize=size)
-        ax.axis("off")
+        ax.axis(axis)
         fig.set_tight_layout(True)
         plt.show()
 
@@ -1058,7 +1102,7 @@ class Lattice(Shape):
         IMPLEMENT DOCUMENTATION
         """
         ## Using Euler's Formula: v - e + f = 2 (f includes outside face)
-        # Only works if connected planar graph ---> implement upon drawing?.
+        # Only works if connected planar graph.
         return 1 - len(self.vertices) + len(self)
 
     def get_shape_sides(self):
