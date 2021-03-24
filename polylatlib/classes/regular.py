@@ -1,3 +1,14 @@
+"""
+**********
+Regular Polygon Classes
+**********
+Regular Polygon classes for PolyLatLib.
+
+This file contains the regular classes and regular polygon presets for PolyLatLib, establishing the
+key attributes for all regular polygons and automatic regular polygon generation methods.
+
+"""
+
 from math import sqrt, sin, cos, radians
 from polylatlib.classes.base_shapes import Shape, Polygon, Lattice
 from polylatlib.functions import change_to_cart_list, change_to_cart_vector, check_if_coord, add_vectors
@@ -19,12 +30,29 @@ class RegularPolygon(Polygon):
     Regular polygons are defined to be polygons with all edges having equal length and all
     internal angles the same.
 
+    Parameters
+    ----------
+    sides : int > 3
+        The number of sides for the regular polygon (Attribute).
+    edge_length : float > 0,
+        Edge length for all edges of the shape (Attribute).
+    centre : (x, y) - 2D Cartesian Coordinate
+        Centre point for the shape. For regular polygons this is possible as the uniform nature
+        of the shape results in an equal radius to each vertex in the polygon (Attribute).
+    rotation : angle
+        The angle, in degrees, to rotate the shape around the centre anti-clockwise. This value
+        is cyclic with period 360 degrees (Attribute).
+
     Attributes
     ----------
-    .int_angle : The angle between edges within the shape.
-    .theta : The angle from one radii, from the centre to each vertex, to the next.
-    .radius : The length from the centre to any vertex in a regular polygon.
-    .radius_vector : The vector from the centre to the initial vertex, with regard to rotation.
+    int_angle : float
+        The angle between edges within the shape.
+    theta : float
+        The angle from one radii, from the centre to each vertex, to the next.
+    radius : float
+        The length from the centre to any vertex in a regular polygon.
+    radius_vector : Vector (x, y)
+        The vector from the centre to the initial vertex, with regard to rotation.
 
     Example
     -------
@@ -43,28 +71,12 @@ class RegularPolygon(Polygon):
     """
     def __init__(self, sides: int, edge_length, centre, rotation):
         """
-        Initialises a Reular Polygon object.
-
-        Parameters
-        ----------
-        sides : int > 3
-            The number of sides for the regular polygon (Attribute).
-        edge_length : float > 0,
-            Edge length for all edges of the shape (Attribute).
-        centre : (x, y) - 2D Cartesian Coordinate
-            Centre point for the shape. For regular polygons this is possible as the uniform nature
-            of the shape results in an equal radius to each vertex in the polygon (Attribute).
-        rotation : angle
-            The angle, in degrees, to rotate the shape around the centre anti-clockwise. This value
-            is cyclic with period 360 degrees (Attribute).
-
-        Example
-        -------
-        >>> ADD EXAMPLE
+        Initialises a Regular Polygon object.
 
         Notes
         -----
-        ADD NOTES
+        When initialised, a regular polygon with dictated number of sides is automatically
+        generated using angle information and edge vectors. 
         """
         self.sides = sides
         self.edge_length = edge_length
@@ -88,12 +100,12 @@ class RegularPolygon(Polygon):
         self.radius_vec = change_to_cart_vector((self.radius, rotation))
 
         # Generate polygon
-        polygon_vectors = self.generate_polygon_vectors()
+        polygon_vectors = self.__generate_polygon_vectors()
         start_pos = add_vectors(centre, self.radius_vec)
         self.generate_shape(start_pos, 0, polygon_vectors)
 
 
-    def generate_polygon_vectors(self):
+    def __generate_polygon_vectors(self):
         """
         Generates and returns the edge vectors for a regular polygon.
 
@@ -101,14 +113,10 @@ class RegularPolygon(Polygon):
         -------
         edge_vectors : list
             List with edge vectors as values.
-
-        Example
-        -------
-        >>> ADD EXAMPLE
-
+    
         Notes
         -----
-        ADD NOTES
+        This private method is used in the generation of regular polygon onjects.
         """
         edge_vectors = []
         for i in range(self.sides):
@@ -125,13 +133,9 @@ class RegularPolygon(Polygon):
         boolean
             Returns True if lattice can be generated from current regular polygon. False if not.
 
-        Example
-        -------
-        >>> ADD EXAMPLE
-
         Notes
         -----
-        ADD NOTES
+        This is a special lattice check for regular polygons as they have a well defined shape.
         """
         lattice_test = 360/self.int_angle
         return lattice_test.is_integer()
@@ -143,32 +147,26 @@ class RegularPolygon(Polygon):
 
 class EquilateralTriangle(RegularPolygon):
     """
-    PRESET SHAPE: EquilateralTriangle
+    PRESET SHAPE: Equilateral Triangle
 
+    Parameters
+    ----------
+    edge_length : float > 0, Default = 1, optional
+        The deired edge length.
+    centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
+        Centre position for the polygon.
+    rotation : angle, Default = 0, optional
+        The angle, in degrees, to rotate the polygon arounds its centre anti-clockwise.
+
+    Notes
+    -----
     Equilateral triangles are 3 sided polygons with equal edge length and internal angle of 60
     degrees. The default Equilateral Triangle is generated "pointing" along the x-axis in the
-    positive direction centred at the origin (0, 0).
+    positive direction centred at the origin, (0, 0).
     """
     def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
         Equilateral Triangles are initialised as Regular Polygons with 3 sides.
-
-        Parameters
-        ----------
-        edge_length : float > 0, Default = 1, optional
-            The deired edge length for the triangles.
-        centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
-            Centre position for the triangle.
-        rotation : angle, Default = 0, optional
-            The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
-
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
         """
         super().__init__(3, edge_length, centre, rotation)
 
@@ -184,15 +182,12 @@ class EquilateralTriangle(RegularPolygon):
         Returns
         -------
         lattice : Lattice
-            Lattice object from
-
-        Example
-        -------
-        >>> ADD EXAMPLE
+            Lattice object of equilateral traingles in circular layers centred on the generating
+            shape's centre.
 
         Notes
         -----
-        ADD NOTES
+        Triangles in circular lattices have alternating orientaion for each layer.
         """
         polar_vectors = []
         for i in range(2*self.sides):
@@ -244,6 +239,23 @@ class EquilateralTriangle(RegularPolygon):
         """
         Generates and returns the stacked lattice for the Equilateral Triangles.
 
+        Parameters
+        ----------
+        rows : int > 0
+            The number of desired rows in the lattice.
+        columns : int > 0
+            The number of desired columns in the lattice.
+
+        Returns
+        -------
+        lattice : Lattice
+            Lattice object of equilateral traingles in stacked, row by columnn, layers centred on
+            the generating shape's centre.
+
+        Notes
+        -----
+        Triangles in stacked lattices have alternating orientaion row-wise and column-wise.
+
         """
         edge_vec_1 = list(self.get_edge_vectors().values())
         edge_vec_2 = [edge_vec_1[2], edge_vec_1[1], edge_vec_1[0]]
@@ -281,30 +293,24 @@ class Square(RegularPolygon):
     """
     PRESET SHAPE: Square
 
-    Squares are 4 sided polygons with internal angles of 90 degrees. The default square is positioned with
-    its edges at 45 degree angles to the x-axis, centred at the origin.
+    Parameters
+    ----------
+    edge_length : float > 0, Default = 1, optional
+        The deired edge length.
+    centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
+        Centre position for the polygon.
+    rotation : angle, Default = 45, optional
+        The angle, in degrees, to rotate the polygon arounds its centre anti-clockwise.
+
+    Notes
+    -----
+    Squares are 4 sided polygons with internal angles of 90 degrees. The default orientation
+    of Squares is with its edges parallel to the axes. This means that unlike other preset
+    regular polygons the initial vertex of the shape does not lie upon the x-axis.
     """
     def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 45):
         """
         Squares are initialised as Regular Polygons with 4 sides.
-
-        Parameters
-        ----------
-        edge_length : float > 0, Default = 1, optional
-            The deired edge length for the triangles.
-        centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
-            Centre position for the triangle.
-        rotation : angle, Default = 45, optional
-            The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
-
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        The default orientation of Squares is with its edges parallel to the axes. This means that
-        unlike other preset regular polygons the initial vertex of the shape does not lie upon the x-axis. 
         """
         super().__init__(4, edge_length, centre, rotation)
 
@@ -320,15 +326,8 @@ class Square(RegularPolygon):
         Returns
         -------
         lattice : Lattice
-            Lattice object from
-
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
+            Lattice object of squares in circular layers centred on the generating
+            shape's centre.
         """
         chg_vectors = list(self.get_edge_vectors().values())
 
@@ -364,11 +363,8 @@ class Square(RegularPolygon):
         Returns
         -------
         lattice : Lattice
-            Stacked lattice of the current polygon.
-        
-        Example
-        -------
-        >>> ADD EXAMPLE
+            Lattice object of squares in stacked, row by columnn, layers centred on
+            the generating shape's centre.
 
         Notes
         -----
@@ -391,11 +387,24 @@ class Square(RegularPolygon):
 
 class Pentagon(RegularPolygon):
     """
-    IMPLEMENT DOCUMENTATION
+    PRESET SHAPE: Pentagon
+
+    Parameters
+    ----------
+    edge_length : float > 0, Default = 1, optional
+        The deired edge length.
+    centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
+        Centre position for the polygon.
+    rotation : angle, Default = 45, optional
+        The angle, in degrees, to rotate the polygon arounds its centre anti-clockwise.
+
+    Notes
+    -----
+    Pentagons are 5 sided polygons with internal angles of 108 degrees.
     """
     def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
-        IMPLEMENT DOCUMENTATION
+        Pentagons are initialised as Regular Polygons with 5 sides.
         """
         super().__init__(5, edge_length, centre, rotation)
 
@@ -404,31 +413,25 @@ class Hexagon(RegularPolygon):
     """
     PRESET SHAPE: Hexagon
 
-    Regular hexagons are 6 sided polygons with internal angles of 120 degrees. The default Hexagon is positioned with
-    its "top" and "bottom" edges parallel to the x-axis, centred at the origin.
+    Parameters
+    ----------
+    edge_length : float > 0, Default = 1, optional
+        The deired edge length.
+    centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
+        Centre position for the polygon.
+    rotation : angle, Default = 45, optional
+        The angle, in degrees, to rotate the polygon arounds its centre anti-clockwise.
+
+    Notes
+    -----
+    Regular hexagons are 6 sided polygons with internal angles of 120 degrees. Similar to
+    the Square preset, the default orientation of hexagons is with its "vertical "edges parallel
+    to the y-axis. This means that unlike other preset regular polygons that the initial vertex of
+    the shape does not lie upon the x-axis.
     """
     def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 30):
         """
         Hexagons are initialised as Regular Polygons with 6 sides.
-
-        Parameters
-        ----------
-        edge_length : float > 0, Default = 1, optional
-            The deired edge length for the triangles.
-        centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
-            Centre position for the triangle.
-        rotation : angle, Default = 30, optional
-            The angle, in degrees, to rotate the triangle arounds its centre anti-clockwise.
-
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        Similar to the Square preset, the default orientation of hexagons is with its "vertical "edges
-        parallel to the y-axis. This means that unlike other preset regular polygons that the initial
-        vertex of the shape does not lie upon the x-axis.
         """
         super().__init__(6, edge_length, centre, rotation)
 
@@ -444,15 +447,8 @@ class Hexagon(RegularPolygon):
         Returns
         -------
         lattice : Lattice
-            Lattice object from
-
-        Example
-        -------
-        >>> ADD EXAMPLE
-
-        Notes
-        -----
-        ADD NOTES
+            Lattice object of hexagons in circular layers centred on the generating
+            shape's centre.
         """
         edgeLengthPlus = 1.5*self.edge_length
         halfHexHeight = round(sqrt(0.75*((self.edge_length)**2)), 2)
@@ -494,11 +490,8 @@ class Hexagon(RegularPolygon):
         Returns
         -------
         lattice : Lattice
-            Stacked lattice of the current polygon.
-        
-        Example
-        -------
-        >>> ADD EXAMPLE
+            Lattice object of hexagons in stacked, row by columnn, layers centred on
+            the generating shape's centre.
 
         Notes
         -----
@@ -523,21 +516,47 @@ class Hexagon(RegularPolygon):
 
 class Septagon(RegularPolygon):
     """
-    IMPLEMENT DOCUMENTATION
+    PRESET SHAPE: Septagon
+
+    Parameters
+    ----------
+    edge_length : float > 0, Default = 1, optional
+        The deired edge length.
+    centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
+        Centre position for the polygon.
+    rotation : angle, Default = 45, optional
+        The angle, in degrees, to rotate the polygon arounds its centre anti-clockwise.
+
+    Notes
+    -----
+    Septagons are 7 sided polygons with internal angles of 128.57 degrees.
     """
     def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
-        IMPLEMENT DOCUMENTATION
+        Septagons are initialised as Regular Polygons with 7 sides.
         """
         super().__init__(7, edge_length, centre, rotation)
 
 
 class Octagon(RegularPolygon):
     """
-    IMPLEMENT DOCUMENTATION
+    PRESET SHAPE: Octagon
+
+    Parameters
+    ----------
+    edge_length : float > 0, Default = 1, optional
+        The deired edge length.
+    centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
+        Centre position for the polygon.
+    rotation : angle, Default = 45, optional
+        The angle, in degrees, to rotate the polygon arounds its centre anti-clockwise.
+
+    Notes
+    -----
+    Octagons are 8 sided polygons with internal angles of 135 degrees.
     """
     def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
-        IMPLEMENT DOCUMENTATION
+        Octagons are initialised as Regular Polygons with 8 sides.
         """
         super().__init__(8, edge_length, centre, rotation)

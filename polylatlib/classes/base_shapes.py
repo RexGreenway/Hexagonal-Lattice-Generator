@@ -1,6 +1,6 @@
 """
 **********
-Classes
+Base Shape Classes
 **********
 Base Shape classes for PolyLatLib.
 
@@ -983,7 +983,8 @@ class Shape():
         plt.show()
 
 
-### POLYGON CLASS ###
+############################################################################################
+
 class Polygon(Shape):
     """
     Polygon class to encapsulate the closed definition of polygons.
@@ -1011,14 +1012,7 @@ class Polygon(Shape):
     def __init__(self):
         """
         Initialises a Polygon object, inherits from Shape..
-        
-        Example
-        -------
-        >>> ADD EXAMPLE
 
-        Notes
-        -----
-        ADD NOTES
         """
         super().__init__()
 

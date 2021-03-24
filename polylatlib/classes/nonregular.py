@@ -1,3 +1,14 @@
+"""
+**********
+Non Regular Polygon Classes
+**********
+Non Regular Polygon classes for PolyLatLib.
+
+This file contains the non-regular classes and non-regular polygon presets for PolyLatLib, establishing
+the key attributes for all non-regular polygons.
+
+"""
+
 import abc
 from polylatlib.classes.base_shapes import Polygon, Lattice
 from polylatlib.functions import add_vectors, change_to_cart_list
