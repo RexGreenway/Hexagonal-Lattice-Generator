@@ -51,7 +51,7 @@ class RegularPolygon(Polygon):
         The angle from one radii, from the centre to each vertex, to the next.
     radius : float
         The length from the centre to any vertex in a regular polygon.
-    radius_vector : Vector (x, y)
+    radius_vec : Vector (x, y)
         The vector from the centre to the initial vertex, with regard to rotation.
 
     Example
@@ -123,6 +123,11 @@ class RegularPolygon(Polygon):
             angle = i*self.theta + (180 - (self.int_angle/2)) + self.rotation
             edge_vectors.append(change_to_cart_vector((self.edge_length, angle)))
         return edge_vectors
+    
+    def get_radius_vec(self):
+        """
+        """
+        return self.radius_vec
 
     def get_lattice_state(self):
         """
@@ -152,7 +157,7 @@ class EquilateralTriangle(RegularPolygon):
     Parameters
     ----------
     edge_length : float > 0, Default = 1, optional
-        The deired edge length.
+        The desired edge length.
     centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
         Centre position for the polygon.
     rotation : angle, Default = 0, optional
