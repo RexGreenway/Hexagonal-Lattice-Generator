@@ -9,10 +9,10 @@ key attributes for all regular polygons and automatic regular polygon generation
 
 """
 
-from math import sqrt, sin, cos, radians
-from polylatlib.classes.base_shapes import Shape, Polygon, Lattice
+from math import sqrt, sin, radians
+from polylatlib.classes.base_shapes import Polygon, Lattice, FourSided
 from polylatlib.functions import change_to_cart_list, change_to_cart_vector, check_if_coord, add_vectors
-from polylatlib.exception import PolyLatError, PolyLatNotCart
+from polylatlib.exception import PolyLatNotCart
 
 __all__ = [
     "RegularPolygon",
@@ -294,7 +294,7 @@ class EquilateralTriangle(RegularPolygon):
                 origin_vertex = add_vectors(origin_vertex, move_row[(i % 2)])
         return lattice
 
-class Square(RegularPolygon):
+class Square(RegularPolygon, FourSided):
     """
     PRESET SHAPE: Square
 
@@ -304,7 +304,7 @@ class Square(RegularPolygon):
         The deired edge length.
     centre : (x, y) - 2D Cartesian Coordinate, Default = (0, 0), optional
         Centre position for the polygon.
-    rotation : angle, Default = 45, optional
+    rotation : angle, Default = 0, optional
         The angle, in degrees, to rotate the polygon arounds its centre anti-clockwise.
 
     Notes
@@ -313,82 +313,12 @@ class Square(RegularPolygon):
     of Squares is with its edges parallel to the axes. This means that unlike other preset
     regular polygons the initial vertex of the shape does not lie upon the x-axis.
     """
-    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 45):
+    def __init__(self, edge_length: float = 1, centre = (0, 0), rotation: float = 0):
         """
         Squares are initialised as Regular Polygons with 4 sides.
         """
-        super().__init__(4, edge_length, centre, rotation)
+        super().__init__(4, edge_length, centre, rotation + 45)
 
-    def generate_lattice_circular(self, layers: int):
-        """
-        Generates and returns the circular lattice for Squares.
-
-        Parameters
-        ----------
-        layers : int > 0
-            The number of desired layers in the lattice.
-
-        Returns
-        -------
-        lattice : Lattice
-            Lattice object of squares in circular layers centred on the generating
-            shape's centre.
-        """
-        chg_vectors = list(self.get_edge_vectors().values())
-
-        lattice = Lattice()
-
-        even_numbers = list(range(0, 2*layers, 2))
-        shape = 0
-        for layer in range(layers):
-            radius_vec = (round((layer*2*self.radius_vec[0]) + self.radius_vec[0], 3), round((layer*2*self.radius_vec[1]) + self.radius_vec[1], 3))
-            start_vertex_pos = add_vectors(self.centre, radius_vec)
-            if layer == 0:
-                lattice.generate_shape(start_vertex_pos, shape, chg_vectors)
-                shape += 1
-            else:
-                for i in range(self.sides):
-                    for _ in range(even_numbers[layer]):
-                        lattice.generate_shape(start_vertex_pos, shape, chg_vectors)
-                        start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[i])
-                        shape += 1
-        return lattice
-
-    def generate_lattice_stacked(self, rows, columns):
-        """
-        Generates and returns the stacked lattice for the Squares.
-        
-        Parameters
-        ----------
-        rows : int > 0
-            Number of rows in the stacked lattice.
-        columns : int > 0
-            Number of columns in the stacked lattice.
-
-        Returns
-        -------
-        lattice : Lattice
-            Lattice object of squares in stacked, row by columnn, layers centred on
-            the generating shape's centre.
-
-        Notes
-        -----
-        Note that the idea of "stacked" specifically refers to the default position of the shape. For
-        squares this results in a (row x column) grid formation with the generating square (current
-        polygon) is situated in the bottom left corner.
-        """
-        edge_vec = list(self.get_edge_vectors().values())
-        move_row = edge_vec[3]
-        move_col = edge_vec[2]
-        lattice  = Lattice()
-        start_pos = add_vectors(self.centre, self.radius_vec)
-        for i in range(rows):
-            vertex_pos = start_pos
-            for j in range(columns):
-                lattice.generate_shape(vertex_pos, str(i) + "." + str(j), edge_vec)
-                vertex_pos = add_vectors(vertex_pos, move_col)
-            start_pos = add_vectors(start_pos, move_row)
-        return lattice
 
 class Pentagon(RegularPolygon):
     """

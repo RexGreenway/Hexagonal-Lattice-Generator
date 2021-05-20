@@ -10,10 +10,15 @@ structure and behaviour.
 """
 
 import abc
-from math import sqrt, sin, cos, radians
 from polylatlib.exception import *
 from polylatlib.functions import add_vectors, is_positive_int, is_supported_colour, check_if_coord
 
+__all__ = [
+    "Shape",
+    "Polygon",
+    "FourSided",
+    "Lattice"
+]
 
 ### SHAPE (Parent Base Class) ###
 class Shape():
@@ -108,13 +113,12 @@ class Shape():
         - Num. of Edges: 5
 
         """
-        return (
-            f"""
-            Type : {type(self).__name__}
-            Number of Vertices : {len(self.vertices)}
-            Number of Edges : {len(self.edges)}
-            """
+        info = (
+            f"""Type : {type(self).__name__}"""
+            f"""\nNumber of Vertices : {len(self.vertices)}"""
+            f"""\nNumber of Edges : {len(self.edges)}"""
         )
+        return info
 
     def __len__(self):
         """
@@ -1070,6 +1074,52 @@ class Polygon(Shape):
         Abstract method that returns whether or not a polygon can have a lattice generated from it.
         To be defined in child classes.
         """
+
+class FourSided(Polygon):
+    """
+    Put this into the base classes file???? For use with SQUARE ASWELL
+    
+    If can be made into a lattice then this 
+    """
+    def generate_lattice_circular(self, layers: int):
+        """
+        IMPLEMENT DOCUMENTATION
+        """
+        chg_vectors = list(self.get_edge_vectors().values())
+
+        lattice = Lattice()
+
+        even_numbers = list(range(0, 2*layers, 2))
+        shape = 0
+        for layer in range(layers):
+            radius_vec = (round((layer*2*self.radius_vec[0]) + self.radius_vec[0], 3), round((layer*2*self.radius_vec[1]) + self.radius_vec[1], 3))
+            start_vertex_pos = add_vectors(self.centre, radius_vec)
+            if layer == 0:
+                lattice.generate_shape(start_vertex_pos, shape, chg_vectors)
+                shape += 1
+            else:
+                for i in range(4):
+                    for _ in range(even_numbers[layer]):
+                        lattice.generate_shape(start_vertex_pos, shape, chg_vectors)
+                        start_vertex_pos = add_vectors(start_vertex_pos, chg_vectors[i])
+                        shape += 1
+        return lattice
+    
+    def generate_lattice_stacked(self, rows, columns):
+        """
+        """
+        edge_vec = list(self.get_edge_vectors().values())
+        move_row = edge_vec[3]
+        move_col = edge_vec[2]
+        lattice  = Lattice()
+        start_pos = add_vectors(self.centre, self.radius_vec)
+        for i in range(rows):
+            vertex_pos = start_pos
+            for j in range(columns):
+                lattice.generate_shape(vertex_pos, str(i) + "." + str(j), edge_vec)
+                vertex_pos = add_vectors(vertex_pos, move_col)
+            start_pos = add_vectors(start_pos, move_row)
+        return lattice
 
 ############################################################################################
 
