@@ -15,8 +15,7 @@ Features so far:
 
 To Install:
 -----------
-1. Copy the repo's HTTPS address from the GitHub page: https://github.com/RexGreenway/polylatlib
-2. In the command line use that address and pip to install the library to your desired Python environment:
+You can install the library using `pip`:
 ```
-pip install git+https://github.com/RexGreenway/polylatlib
+pip install polylatlib
 ```
