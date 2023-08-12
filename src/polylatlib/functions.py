@@ -1,4 +1,4 @@
-from math import sin, cos, radians
+from math import cos, radians, sin
 
 __all__ = [
     "check_if_coord",
@@ -6,10 +6,10 @@ __all__ = [
     "is_supported_colour",
     "add_vectors",
     "change_to_cart_vector",
-    "change_to_cart_list"
+    "change_to_cart_list",
 ]
 
-## VALUE CHECKING ##
+
 def check_if_coord(value):
     if type(value) == tuple and len(value) == 2:
         ans = True
@@ -20,11 +20,13 @@ def check_if_coord(value):
     else:
         return False
 
+
 def is_positive_int(value):
     if value > 0 and type(value) == int:
         return True
     else:
         return False
+
 
 def is_supported_colour(colour):
     colours = ["k", "r", "g", "b", "c", "m", "y"]
@@ -34,17 +36,18 @@ def is_supported_colour(colour):
         return False
 
 
-## VECTOR MANIPULATION ##
 def add_vectors(a, b):
     new_val = (a[0] + b[0], a[1] + b[1])
     new_val = (round(new_val[0], 6), round(new_val[1], 6))
     return new_val
 
+
 def change_to_cart_vector(polar_vector):
-    x = polar_vector[0]*cos(radians(polar_vector[1]))
-    y = polar_vector[0]*sin(radians(polar_vector[1]))
+    x = polar_vector[0] * cos(radians(polar_vector[1]))
+    y = polar_vector[0] * sin(radians(polar_vector[1]))
     temp = (round(x, 3), round(y, 3))
     return temp
+
 
 def change_to_cart_list(vector_list):
     temp = []
